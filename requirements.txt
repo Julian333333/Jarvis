@@ -3,3 +3,5 @@ speechrecognition==3.10.0
 pyttsx3==2.90
 requests==2.31.0
 pywin32==306
+pyaudio
+psutil==6.1.0
