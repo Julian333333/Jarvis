@@ -28,11 +28,154 @@ class VoiceController(QObject):
         self.conversation_mode = False  # Für kontinuierliche Konversation
         self.activation_word = "jarvis"
         
-    def speak(self, text):
-        def _speak():
-            self.engine.say(text)
+        # TTS-Engine konfigurieren für bessere deutsche Sprache
+        self._setup_tts_engine()
+    
+    def _setup_tts_engine(self):
+        """Konfiguriert die Text-to-Speech Engine für optimale deutsche Ausgabe"""
+        try:
+            # Verfügbare Stimmen abrufen
+            voices = self.engine.getProperty('voices')
+            
+            # Erweiterte Suche nach deutschen Stimmen
+            best_german_voice = None
+            fallback_voice = None
+            
+            print("🔍 Suche nach deutschen TTS-Stimmen...")
+            
+            for voice in voices:
+                voice_name = voice.name.lower() if voice.name else ""
+                print(f"📋 Gefunden: {voice.name} - ID: {voice.id}")
+                
+                # Priorität 1: Explizit deutsche Stimmen
+                if voice.languages:
+                    for lang in voice.languages:
+                        if 'de' in lang.lower() or 'german' in lang.lower():
+                            best_german_voice = voice.id
+                            print(f"✅ Beste deutsche Stimme gefunden: {voice.name} (Sprache: {lang})")
+                            break
+                
+                # Priorität 2: Deutsche Stimmen anhand des Namens
+                german_voice_indicators = [
+                    'hedda', 'katja', 'stefan', 'german', 'deutsch', 'de-de'
+                ]
+                if any(indicator in voice_name for indicator in german_voice_indicators):
+                    if not best_german_voice:  # Nur setzen wenn noch keine bessere gefunden
+                        best_german_voice = voice.id
+                        print(f"✅ Deutsche Stimme nach Name gefunden: {voice.name}")
+                
+                # Priorität 3: Fallback zu weiblichen/qualitativ hochwertigen Stimmen
+                quality_indicators = ['zira', 'hazel', 'eva', 'female']
+                if any(indicator in voice_name for indicator in quality_indicators):
+                    if not fallback_voice:
+                        fallback_voice = voice.id
+            
+            # Stimme setzen (beste verfügbare Wahl)
+            if best_german_voice:
+                self.engine.setProperty('voice', best_german_voice)
+                print("🎤 Deutsche TTS-Stimme aktiviert für optimale deutsche Aussprache")
+            elif fallback_voice:
+                self.engine.setProperty('voice', fallback_voice)
+                print("🎤 Qualitäts-TTS-Stimme aktiviert (Fallback)")
+            else:
+                print("🎤 Standard-TTS-Stimme wird verwendet")
+            
+            # TTS-Eigenschaften für deutsche Sprache optimieren
+            self.engine.setProperty('rate', 170)    # Etwas langsamer für deutsche Aussprache
+            self.engine.setProperty('volume', 0.95)  # Etwas lauter für Klarheit
+            
+            # Teste die ausgewählte Stimme
+            self._test_german_pronunciation()
+            
+        except Exception as e:
+            print(f"⚠️ TTS-Setup Fehler: {e}")
+    
+    def _test_german_pronunciation(self):
+        """Testet die deutsche Aussprache der gewählten Stimme"""
+        try:
+            # Test mit typischen deutschen Wörtern
+            test_text = "JARVIS Sprachsystem initialisiert."
+            print(f"🧪 Teste deutsche Aussprache mit: '{test_text}'")
+            # Stille Ausführung des Tests (ohne Ausgabe)
+            self.engine.say("")  # Leerer Test um Engine zu initialisieren
             self.engine.runAndWait()
+        except Exception as e:
+            print(f"⚠️ Sprachtest Fehler: {e}")
+    
+    def speak(self, text):
+        """Spricht den gegebenen Text aus mit deutscher TTS"""
+        self._speak_standard(text)
+    
+    def _speak_standard(self, text):
+        """Spricht den gegebenen Text aus mit verbesserter deutscher Aussprache"""
+        def _speak():
+            try:
+                # Bereinige den Text für bessere TTS-Ausgabe
+                cleaned_text = self._clean_text_for_tts(text)
+                print(f"🔊 JARVIS spricht: {cleaned_text}")
+                
+                self.engine.say(cleaned_text)
+                self.engine.runAndWait()
+            except Exception as e:
+                print(f"TTS-Fehler: {e}")
+        
         threading.Thread(target=_speak, daemon=True).start()
+    
+    def _clean_text_for_tts(self, text):
+        """Bereinigt Text für bessere deutsche TTS-Aussprache"""
+        # Entferne problematische Zeichen
+        text = text.replace('*', '').replace('#', '')
+        text = text.replace('✅', 'OK').replace('❌', 'Fehler')
+        text = text.replace('⚠️', 'Warnung').replace('🔊', '')
+        text = text.replace('🎤', '').replace('📋', '')
+        
+        # Verbessere deutsche Aussprache für technische Begriffe
+        german_replacements = {
+            # Technische Abkürzungen
+            'CPU': 'C P U',
+            'RAM': 'R A M', 
+            'AI': 'A I',
+            'API': 'A P I',
+            'URL': 'U R L',
+            'HTTP': 'H T T P',
+            'HTTPS': 'H T T P S',
+            'GPU': 'G P U',
+            'SSD': 'S S D',
+            'USB': 'U S B',
+            
+            # JARVIS spezifische Begriffe
+            'JARVIS': 'Jarvis',
+            'J.A.R.V.I.S': 'Jarvis',
+            
+            # Betriebssystem-Begriffe
+            'Windows': 'Windows',
+            'Powershell': 'Powerschell',
+            'CMD': 'C M D',
+            
+            # Häufige englische Begriffe deutsch aussprechen
+            'Browser': 'Browser',
+            'Update': 'Apdeht',
+            'Download': 'Daunlohd',
+            'Upload': 'Aplohd',
+            'Software': 'Software',
+            'Hardware': 'Hardware',
+            'System': 'Sistehm',
+            
+            # Deutsche Sonderzeichen richtig aussprechen
+            'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss',
+            'Ä': 'Ae', 'Ö': 'Oe', 'Ü': 'Ue'
+        }
+        
+        for english, german in german_replacements.items():
+            text = text.replace(english, german)
+        
+        # Verbessere Satzzeichen für natürlichere Pausen
+        text = text.replace(', ', ', ')  # Kleine Pause nach Komma
+        text = text.replace('. ', '. ')   # Pause nach Punkt
+        text = text.replace('! ', '! ')   # Pause nach Ausrufezeichen
+        text = text.replace('? ', '? ')   # Pause nach Fragezeichen
+        
+        return text.strip()
     
     def listen_for_activation(self):
         with sr.Microphone() as source:
@@ -131,7 +274,7 @@ class JarvisGUI(QMainWindow):
             }
             QLabel {
                 color: #00FFFF;
-                font-size: 20px;
+                font-size: 34px;
                 font-weight: bold;
             }
             QPushButton {
@@ -140,7 +283,7 @@ class JarvisGUI(QMainWindow):
                 border-radius: 10px;
                 padding: 20px 30px;
                 color: #00FFFF;
-                font-size: 18px;
+                font-size: 40px;
                 font-weight: bold;
                 min-height: 30px;
             }
@@ -158,7 +301,7 @@ class JarvisGUI(QMainWindow):
                 border-radius: 10px;
                 padding: 20px;
                 color: #00FFFF;
-                font-size: 16px;
+                font-size: 36px;
                 line-height: 1.4;
             }
             QFrame {
@@ -210,10 +353,11 @@ class JarvisGUI(QMainWindow):
         title = QLabel("J.A.R.V.I.S")
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet("""
-            font-size: 56px;
+            font-size: 80px;
             font-weight: bold;
             color: #00FFFF;
-            margin: 20px;
+            margin: 30px;
+            letter-spacing: 8px;
         """)
         header_layout.addWidget(title)
         
@@ -221,9 +365,10 @@ class JarvisGUI(QMainWindow):
         self.main_status = QLabel("SYSTEM BEREIT")
         self.main_status.setAlignment(Qt.AlignCenter)
         self.main_status.setStyleSheet("""
-            font-size: 24px;
+            font-size: 40px;
+            font-weight: bold;
             color: #00FF00;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         """)
         header_layout.addWidget(self.main_status)
         
@@ -232,17 +377,17 @@ class JarvisGUI(QMainWindow):
     def create_status_section(self, layout):
         status_frame = QFrame()
         status_layout = QHBoxLayout(status_frame)
-        status_layout.setSpacing(40)
+        status_layout.setSpacing(60)
         
         # AI Status
         ai_widget = QWidget()
         ai_layout = QVBoxLayout(ai_widget)
         ai_title = QLabel("KI KERN")
         ai_title.setAlignment(Qt.AlignCenter)
-        ai_title.setStyleSheet("font-size: 22px; color: #00FFFF; margin-bottom: 10px;")
+        ai_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #00FFFF; margin-bottom: 15px;")
         self.ai_status = QLabel("AKTIV")
         self.ai_status.setAlignment(Qt.AlignCenter)
-        self.ai_status.setStyleSheet("font-size: 20px; color: #00FF00;")
+        self.ai_status.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FF00;")
         ai_layout.addWidget(ai_title)
         ai_layout.addWidget(self.ai_status)
         
@@ -251,10 +396,10 @@ class JarvisGUI(QMainWindow):
         voice_layout = QVBoxLayout(voice_widget)
         voice_title = QLabel("SPRACHE")
         voice_title.setAlignment(Qt.AlignCenter)
-        voice_title.setStyleSheet("font-size: 22px; color: #00FFFF; margin-bottom: 10px;")
+        voice_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #00FFFF; margin-bottom: 15px;")
         self.voice_status = QLabel("BEREIT")
         self.voice_status.setAlignment(Qt.AlignCenter)
-        self.voice_status.setStyleSheet("font-size: 20px; color: #FFA500;")
+        self.voice_status.setStyleSheet("font-size: 40px; font-weight: bold; color: #FFA500;")
         voice_layout.addWidget(voice_title)
         voice_layout.addWidget(self.voice_status)
         
@@ -263,10 +408,10 @@ class JarvisGUI(QMainWindow):
         sys_layout = QVBoxLayout(sys_widget)
         sys_title = QLabel("SYSTEM")
         sys_title.setAlignment(Qt.AlignCenter)
-        sys_title.setStyleSheet("font-size: 22px; color: #00FFFF; margin-bottom: 10px;")
+        sys_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #00FFFF; margin-bottom: 15px;")
         self.sys_status = QLabel("ONLINE")
         self.sys_status.setAlignment(Qt.AlignCenter)
-        self.sys_status.setStyleSheet("font-size: 20px; color: #00FF00;")
+        self.sys_status.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FF00;")
         sys_layout.addWidget(sys_title)
         sys_layout.addWidget(self.sys_status)
         
@@ -280,55 +425,102 @@ class JarvisGUI(QMainWindow):
         # Chat Bereich
         chat_frame = QFrame()
         chat_layout = QVBoxLayout(chat_frame)
-        chat_layout.setSpacing(20)
+        chat_layout.setSpacing(30)
         
         # Chat Label
         chat_label = QLabel("KOMMUNIKATION")
-        chat_label.setStyleSheet("font-size: 24px; color: #00FFFF; margin-bottom: 15px;")
+        chat_label.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FFFF; margin-bottom: 20px;")
         chat_layout.addWidget(chat_label)
         
-        # Output Text - größer und einfacher
+        # Output Text - größer und klarer
         self.output_text = QTextEdit()
-        self.output_text.setMinimumHeight(250)
-        self.output_text.append("<span style='color: #00FF00; font-size: 18px;'>[SYSTEM]</span> J.A.R.V.I.S ist online und bereit.")
+        self.output_text.setMinimumHeight(350)
+        self.output_text.setStyleSheet("""
+            font-size: 36px;
+            font-weight: bold;
+            background-color: #0d0d0d;
+            color: #ffffff;
+            border: 2px solid #00FFFF;
+            border-radius: 8px;
+            padding: 15px;
+            line-height: 1.5;
+        """)
+        self.output_text.append("<span style='color: #00FF00; font-size: 34px; font-weight: bold;'>[SYSTEM]</span> <span style='font-size: 40px;'>J.A.R.V.I.S ist online und bereit.</span>")
         chat_layout.addWidget(self.output_text)
         
         # Input Bereich
         input_frame = QFrame()
         input_layout = QVBoxLayout(input_frame)
-        input_layout.setSpacing(20)
+        input_layout.setSpacing(25)
         
         # Input Label
         input_label = QLabel("BEFEHLSEINGABE")
-        input_label.setStyleSheet("font-size: 24px; color: #00FFFF;")
+        input_label.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FFFF;")
         input_layout.addWidget(input_label)
         
-        # Input Text
+        # Input Text - größer und klarer
         self.input_text = QTextEdit()
-        self.input_text.setMaximumHeight(100)
+        self.input_text.setMaximumHeight(150)
+        self.input_text.setStyleSheet("""
+            font-size: 40px;
+            font-weight: bold;
+            padding: 15px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            border: 2px solid #00FFFF;
+            border-radius: 8px;
+        """)
         self.input_text.setPlaceholderText("Geben Sie Ihren Befehl ein oder verwenden Sie das Mikrofon...")
         input_layout.addWidget(self.input_text)
         
-        # Buttons - groß und einfach
+        # Buttons - deutlich größer und klarer
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(30)
+        button_layout.setSpacing(20)
+        
+        # Button-Style für alle Buttons
+        button_style = """
+            QPushButton {
+                font-size: 36px;
+                font-weight: bold;
+                padding: 15px 25px;
+                background-color: #2d2d2d;
+                color: #00FFFF;
+                border: 2px solid #00FFFF;
+                border-radius: 8px;
+                min-height: 50px;
+                min-width: 140px;
+            }
+            QPushButton:hover {
+                background-color: #3d3d3d;
+                border-color: #00FF00;
+                color: #00FF00;
+            }
+            QPushButton:pressed {
+                background-color: #1d1d1d;
+            }
+        """
         
         self.execute_button = QPushButton("AUSFÜHREN")
         self.execute_button.clicked.connect(self.send_command)
+        self.execute_button.setStyleSheet(button_style)
         
         self.voice_button = QPushButton("SPRACHSTEUERUNG")
         self.voice_button.clicked.connect(self.toggle_voice)
+        self.voice_button.setStyleSheet(button_style)
         
         self.speech_to_text_button = QPushButton("🎤 MIKROFON")
         self.speech_to_text_button.clicked.connect(self.toggle_speech_to_text)
+        self.speech_to_text_button.setStyleSheet(button_style)
         self.speech_to_text_active = False
         
         self.conversation_button = QPushButton("💬 GESPRÄCH")
         self.conversation_button.clicked.connect(self.toggle_conversation)
+        self.conversation_button.setStyleSheet(button_style)
         self.conversation_active = False
         
         self.diagnostics_button = QPushButton("DIAGNOSE")
         self.diagnostics_button.clicked.connect(self.run_diagnostics)
+        self.diagnostics_button.setStyleSheet(button_style)
         
         button_layout.addWidget(self.execute_button)
         button_layout.addWidget(self.voice_button)
@@ -352,16 +544,16 @@ class JarvisGUI(QMainWindow):
             self.voice.stop_listening()
             self.voice_button.setText("SPRACHSTEUERUNG")
             self.voice_status.setText("BEREIT")
-            self.voice_status.setStyleSheet("font-size: 20px; color: #FFA500;")
+            self.voice_status.setStyleSheet("font-size: 34px; color: #FFA500;")
             self.main_status.setText("SYSTEM BEREIT")
-            self.main_status.setStyleSheet("font-size: 24px; color: #00FF00; margin-bottom: 20px;")
+            self.main_status.setStyleSheet("font-size: 40px; color: #00FF00; margin-bottom: 20px;")
         else:
             self.voice.start_listening()
             self.voice_button.setText("SPRACHE AKTIV")
             self.voice_status.setText("HÖRT ZU")
-            self.voice_status.setStyleSheet("font-size: 20px; color: #FF0000;")
+            self.voice_status.setStyleSheet("font-size: 34px; color: #FF0000;")
             self.main_status.setText("HÖRE AUF 'JARVIS'")
-            self.main_status.setStyleSheet("font-size: 24px; color: #FF8800; margin-bottom: 20px;")
+            self.main_status.setStyleSheet("font-size: 40px; color: #FF8800; margin-bottom: 20px;")
     
     def toggle_speech_to_text(self):
         """Schaltet Speech-to-Text Modus um"""
@@ -372,8 +564,8 @@ class JarvisGUI(QMainWindow):
             self.speech_to_text_button.setStyleSheet("")  # Standard-Style
             self.speech_to_text_active = False
             self.voice_status.setText("BEREIT")
-            self.voice_status.setStyleSheet("font-size: 20px; color: #FFA500;")
-            self.output_text.append("<span style='color: #0096FF; font-size: 18px;'>[SYSTEM]</span> Spracherkennung deaktiviert.")
+            self.voice_status.setStyleSheet("font-size: 34px; color: #FFA500;")
+            self.output_text.append("<span style='color: #0096FF; font-size: 40px;'>[SYSTEM]</span> Spracherkennung deaktiviert.")
         else:
             # Speech-to-Text aktivieren
             self.voice.start_continuous_listening()
@@ -381,8 +573,8 @@ class JarvisGUI(QMainWindow):
             self.speech_to_text_button.setStyleSheet("background-color: #ff4444; border-color: #ff6666;")
             self.speech_to_text_active = True
             self.voice_status.setText("NIMMT AUF")
-            self.voice_status.setStyleSheet("font-size: 20px; color: #FF0000;")
-            self.output_text.append("<span style='color: #0096FF; font-size: 18px;'>[SYSTEM]</span> Spracherkennung aktiviert. Sprechen Sie in das Mikrofon...")
+            self.voice_status.setStyleSheet("font-size: 34px; color: #FF0000;")
+            self.output_text.append("<span style='color: #0096FF; font-size: 40px;'>[SYSTEM]</span> Spracherkennung aktiviert. Sprechen Sie in das Mikrofon...")
     
     def toggle_conversation(self):
         """Schaltet den kontinuierlichen Konversationsmodus um"""
@@ -393,10 +585,10 @@ class JarvisGUI(QMainWindow):
             self.conversation_button.setStyleSheet("")  # Standard-Style
             self.conversation_active = False
             self.voice_status.setText("BEREIT")
-            self.voice_status.setStyleSheet("font-size: 20px; color: #FFA500;")
+            self.voice_status.setStyleSheet("font-size: 34px; color: #FFA500;")
             self.main_status.setText("SYSTEM BEREIT")
-            self.main_status.setStyleSheet("font-size: 24px; color: #00FF00; margin-bottom: 20px;")
-            self.output_text.append("<span style='color: #0096FF; font-size: 18px;'>[SYSTEM]</span> Konversationsmodus deaktiviert.")
+            self.main_status.setStyleSheet("font-size: 40px; color: #00FF00; margin-bottom: 20px;")
+            self.output_text.append("<span style='color: #0096FF; font-size: 40px;'>[SYSTEM]</span> Konversationsmodus deaktiviert.")
         else:
             # Andere Modi erst stoppen
             if self.speech_to_text_active:
@@ -410,10 +602,10 @@ class JarvisGUI(QMainWindow):
             self.conversation_button.setStyleSheet("background-color: #ff4444; border-color: #ff6666;")
             self.conversation_active = True
             self.voice_status.setText("HÖRT ZU")
-            self.voice_status.setStyleSheet("font-size: 20px; color: #FF0000;")
+            self.voice_status.setStyleSheet("font-size: 34px; color: #FF0000;")
             self.main_status.setText("GESPRÄCHSMODUS AKTIV")
-            self.main_status.setStyleSheet("font-size: 24px; color: #FF0000; margin-bottom: 20px;")
-            self.output_text.append("<span style='color: #FF0000; font-size: 18px;'>[SYSTEM]</span> Konversationsmodus aktiviert. Sprechen Sie einfach - JARVIS hört kontinuierlich zu!")
+            self.main_status.setStyleSheet("font-size: 40px; color: #FF0000; margin-bottom: 20px;")
+            self.output_text.append("<span style='color: #FF0000; font-size: 40px;'>[SYSTEM]</span> Konversationsmodus aktiviert. Sprechen Sie einfach - JARVIS hört kontinuierlich zu!")
             
             # Auto-scroll
             scrollbar = self.output_text.verticalScrollBar()
@@ -421,7 +613,7 @@ class JarvisGUI(QMainWindow):
     
     def handle_conversation(self, text):
         """Behandelt kontinuierliche Konversation - führt Befehle automatisch aus"""
-        self.output_text.append(f"<span style='color: #FF6600; font-size: 18px;'>[SIE]</span> {text}")
+        self.output_text.append(f"<span style='color: #FF6600; font-size: 40px;'>[SIE]</span> {text}")
         
         # Prüfe auf Stopp-Befehle
         if any(word in text.lower() for word in ['stopp', 'stop', 'beenden', 'aufhören', 'schluss']):
@@ -435,7 +627,7 @@ class JarvisGUI(QMainWindow):
         else:
             response = self.ai.process_command(text)
             
-        self.output_text.append(f"<span style='color: #00FF00; font-size: 18px;'>[JARVIS]</span> {response}")
+        self.output_text.append(f"<span style='color: #00FF00; font-size: 40px;'>[JARVIS]</span> {response}")
         self.voice.speak(response)
         
         # Auto-scroll
@@ -460,14 +652,14 @@ class JarvisGUI(QMainWindow):
         self.input_text.setTextCursor(cursor)
         
         # Feedback im Chat
-        self.output_text.append(f"<span style='color: #FFA500; font-size: 16px;'>[MIKROFON]</span> {text}")
+        self.output_text.append(f"<span style='color: #FFA500; font-size: 36px;'>[MIKROFON]</span> {text}")
     
     def handle_voice_command(self, command):
-        self.output_text.append(f"<span style='color: #FF8800; font-size: 18px;'>[SPRACHE]</span> {command}")
+        self.output_text.append(f"<span style='color: #FF8800; font-size: 40px;'>[SPRACHE]</span> {command}")
         
         # Verwende den Befehlsprozessor für Sprachbefehle
         response = self.command_processor.process_command(command)
-        self.output_text.append(f"<span style='color: #00FF00; font-size: 18px;'>[JARVIS]</span> {response}")
+        self.output_text.append(f"<span style='color: #00FF00; font-size: 40px;'>[JARVIS]</span> {response}")
         self.voice.speak(response)
         
         # Auto-scroll
@@ -475,7 +667,7 @@ class JarvisGUI(QMainWindow):
         scrollbar.setValue(scrollbar.maximum())
     
     def process_command(self, command):
-        self.output_text.append(f"<span style='color: #00FFFF; font-size: 18px;'>[BENUTZER]</span> {command}")
+        self.output_text.append(f"<span style='color: #00FFFF; font-size: 40px;'>[BENUTZER]</span> {command}")
         
         # Für getippte Befehle: Prüfe erst auf Sprachbefehle, dann AI
         if any(keyword in command.lower() for keyword in self.command_processor.commands.keys()):
@@ -483,7 +675,7 @@ class JarvisGUI(QMainWindow):
         else:
             response = self.ai.process_command(command)
             
-        self.output_text.append(f"<span style='color: #00FF00; font-size: 18px;'>[JARVIS]</span> {response}")
+        self.output_text.append(f"<span style='color: #00FF00; font-size: 40px;'>[JARVIS]</span> {response}")
         self.voice.speak(response)
         
         # Windows integration
@@ -494,12 +686,12 @@ class JarvisGUI(QMainWindow):
         scrollbar.setValue(scrollbar.maximum())
     
     def run_diagnostics(self):
-        self.output_text.append("<span style='color: #0096FF; font-size: 18px;'>[SYSTEM]</span> Führe vollständige Systemdiagnose durch...")
+        self.output_text.append("<span style='color: #0096FF; font-size: 40px;'>[SYSTEM]</span> Führe vollständige Systemdiagnose durch...")
         self.ai_status.setText("OPTIMAL")
-        self.ai_status.setStyleSheet("font-size: 20px; color: #00FF00;")
+        self.ai_status.setStyleSheet("font-size: 34px; color: #00FF00;")
         self.sys_status.setText("PERFEKT")
-        self.sys_status.setStyleSheet("font-size: 20px; color: #00FF00;")
-        self.output_text.append("<span style='color: #00FF00; font-size: 18px;'>[SYSTEM]</span> Alle Systeme optimal. Keine Probleme erkannt.")
+        self.sys_status.setStyleSheet("font-size: 34px; color: #00FF00;")
+        self.output_text.append("<span style='color: #00FF00; font-size: 40px;'>[SYSTEM]</span> Alle Systeme optimal. Keine Probleme erkannt.")
     
     def update_status(self):
         # Einfache Status-Updates ohne komplexe Animationen
@@ -508,23 +700,26 @@ class JarvisGUI(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     
-    # Responsive Schriftarten basierend auf Bildschirmgröße
+    # Responsive Schriftarten basierend auf Bildschirmgröße - DEUTLICH GRÖßER
     screen = app.primaryScreen()
     screen_size = screen.size()
     
-    # Font scaling basierend auf Bildschirmbreite
+    # Font scaling für bessere Lesbarkeit
     if screen_size.width() >= 1920:
-        font_scale = 1.2
+        font_scale = 2.0  # Viel größer für 4K/HD Monitore
     elif screen_size.width() >= 1440:
-        font_scale = 1.0
+        font_scale = 1.6  # Größer für normale Monitore
     else:
-        font_scale = 0.9
+        font_scale = 1.2  # Minimum für kleinere Bildschirme
     
-    # Setze globale Schriftart
-    font = QFont("Segoe UI", int(14 * font_scale))
+    # Setze globale Schriftart - deutlich größer
+    font = QFont("Segoe UI", int(16 * font_scale), QFont.Bold)  # Bold für bessere Lesbarkeit
     app.setFont(font)
     
     window = JarvisGUI()
+    
+    print("🎤 Deutsche TTS-Stimme aktiviert - JARVIS bereit!")
+    
     window.show()
     sys.exit(app.exec_())
 
