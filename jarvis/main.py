@@ -5,7 +5,7 @@ Jarvis AI Assistant - Main Application
 import sys
 import threading
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
-                             QWidget, QLabel, QPushButton, QTextEdit, QFrame)
+                             QWidget, QLabel, QPushButton, QTextEdit, QFrame, QSizePolicy)
 from PyQt5.QtCore import QTimer, pyqtSignal, QObject, Qt
 from PyQt5.QtGui import QFont, QPainter, QPen, QColor
 import pyttsx3
@@ -262,22 +262,23 @@ class JarvisGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("J.A.R.V.I.S")
-        self.setGeometry(100, 100, 1200, 800)
-        self.setMinimumSize(800, 600)
-        
+        # Optimale Startgröße für Full HD (1920x1080)
+        self.setGeometry(100, 100, 1600, 900)
+        self.setMinimumSize(1280, 720)
+
         # Einfaches, responsives Design mit großen Schriftarten
         self.setStyleSheet("""
-            QMainWindow {
-                background-color: #0a0a0a;
-                color: #00FFFF;
-                font-family: 'Segoe UI', Arial, sans-serif;
-            }
-            QLabel {
-                color: #00FFFF;
-                font-size: 34px;
-                font-weight: bold;
-            }
-            QPushButton {
+QMainWindow {
+    background-color: #0a0a0a;
+    color: #00FFFF;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+QLabel {
+    color: #00FFFF;
+    font-size: 34px;
+    font-weight: bold;
+}
+QPushButton {
                 background-color: #1a1a2e;
                 border: 2px solid #00FFFF;
                 border-radius: 10px;
@@ -434,7 +435,7 @@ class JarvisGUI(QMainWindow):
         
         # Output Text - größer und klarer
         self.output_text = QTextEdit()
-        self.output_text.setMinimumHeight(350)
+        self.output_text.setMinimumHeight(180)
         self.output_text.setStyleSheet("""
             font-size: 36px;
             font-weight: bold;
@@ -450,6 +451,7 @@ class JarvisGUI(QMainWindow):
         
         # Input Bereich
         input_frame = QFrame()
+        input_frame.setMinimumHeight(100)  # Mindesthöhe reduziert
         input_layout = QVBoxLayout(input_frame)
         input_layout.setSpacing(25)
         
@@ -527,11 +529,14 @@ class JarvisGUI(QMainWindow):
         button_layout.addWidget(self.speech_to_text_button)
         button_layout.addWidget(self.conversation_button)
         button_layout.addWidget(self.diagnostics_button)
-        
         input_layout.addLayout(button_layout)
         
         chat_layout.addWidget(input_frame)
         layout.addWidget(chat_frame)
+        
+        # Nach dem Erstellen der Widgets:
+        self.output_text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.input_text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
     
     def send_command(self):
         command = self.input_text.toPlainText().strip()
@@ -697,30 +702,52 @@ class JarvisGUI(QMainWindow):
         # Einfache Status-Updates ohne komplexe Animationen
         pass
 
+    def resizeEvent(self, event):
+        """Passe Schriftgrößen und Layout dynamisch an die Fenstergröße an"""
+        width = self.width()
+        # Dynamische Skalierung: Schriftgröße proportional zur Fensterbreite
+        # Für Full HD: Standard-Schriftgröße 18, skaliert ab 1600px
+        if width >= 1920:
+            font_size = 18
+        elif width >= 1600:
+            font_size = 16
+        elif width >= 1280:
+            font_size = 14
+        else:
+            font_size = 12
+        font = QFont("Segoe UI", font_size, QFont.Bold)
+        self.setFont(font)
+        # Passe auch die Größe der Textfelder und Buttons an
+        if hasattr(self, "output_text"):
+            self.output_text.setFont(font)
+        if hasattr(self, "input_text"):
+            self.input_text.setFont(font)
+        for btn in [getattr(self, n, None) for n in ["execute_button", "voice_button", "speech_to_text_button", "conversation_button", "diagnostics_button"]]:
+            if btn:
+                btn.setFont(font)
+        super().resizeEvent(event)
+
 def main():
     app = QApplication(sys.argv)
-    
-    # Responsive Schriftarten basierend auf Bildschirmgröße - DEUTLICH GRÖßER
     screen = app.primaryScreen()
     screen_size = screen.size()
-    
-    # Font scaling für bessere Lesbarkeit
+    # Dynamische Schriftgröße abhängig von Bildschirmbreite
+    # Optimale Schriftgröße für Full HD
     if screen_size.width() >= 1920:
-        font_scale = 2.0  # Viel größer für 4K/HD Monitore
-    elif screen_size.width() >= 1440:
-        font_scale = 1.6  # Größer für normale Monitore
+        font_size = 18
+    elif screen_size.width() >= 1600:
+        font_size = 16
+    elif screen_size.width() >= 1280:
+        font_size = 14
     else:
-        font_scale = 1.2  # Minimum für kleinere Bildschirme
-    
-    # Setze globale Schriftart - deutlich größer
-    font = QFont("Segoe UI", int(16 * font_scale), QFont.Bold)  # Bold für bessere Lesbarkeit
+        font_size = 12
+    font = QFont("Segoe UI", font_size, QFont.Bold)
     app.setFont(font)
-    
     window = JarvisGUI()
-    
-    print("🎤 Deutsche TTS-Stimme aktiviert - JARVIS bereit!")
-    
+    # Setze Fenstergröße auf 1600x900 für Full HD
+    window.resize(1600, 900)
     window.show()
+    print("🎤 Deutsche TTS-Stimme aktiviert - JARVIS bereit!")
     sys.exit(app.exec_())
 
 if __name__ == "__main__":
