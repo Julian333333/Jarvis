@@ -1,3 +1,27 @@
+# Ollama Setup für Windows
+
+## Voraussetzungen
+- Windows 10 oder neuer
+- Administratorrechte
+
+## Installation
+1. Lade das Ollama-Installationsprogramm für Windows von der offiziellen Website herunter:
+	[https://ollama.com/download](https://ollama.com/download)
+2. Führe die heruntergeladene Datei aus und folge den Installationsanweisungen.
+3. Nach der Installation kannst du im Terminal prüfen, ob Ollama korrekt installiert wurde:
+	```powershell
+	ollama --version
+	```
+
+## Automatisiertes Setup (Batch-Skript)
+Alternativ kannst du das mitgelieferte Skript `install_ollama.bat` ausführen, um die Installation zu starten:
+```powershell
+./install_ollama.bat
+```
+Das Skript öffnet die Ollama-Downloadseite im Browser.
+
+---
+Weitere Informationen findest du in der offiziellen [Ollama Dokumentation](https://ollama.com/docs/).
 # Ollama Integration Anleitung
 
 ## Schritt 1: Ollama Server starten
