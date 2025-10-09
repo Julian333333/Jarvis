@@ -396,57 +396,80 @@ class JarvisGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("J.A.R.V.I.S")
-        # Optimale Startgröße für Full HD (1920x1080)
-        self.setGeometry(100, 100, 1600, 900)
-        self.setMinimumSize(1280, 720)
+        # Responsive Startgröße: 80% des Bildschirms, mit kleineren Mindestmaßen für Laptops
+        screen = QApplication.primaryScreen()
+        screen_size = screen.size()
+        start_w = max(800, int(screen_size.width() * 0.8))
+        start_h = max(600, int(screen_size.height() * 0.7))
+        self.resize(start_w, start_h)
+        # Zulassen, dass die App auch auf kleineren Laptops startet
+        self.setMinimumSize(700, 480)
+ 
+        # Verwende ein responsives Stylesheet (wird initial gesetzt und bei Resize angepasst)
+        self._apply_responsive_styles()
+        
+    def _apply_responsive_styles(self):
+        """Erzeugt ein einfaches, responsives Stylesheet basierend auf der aktuellen Fensterbreite."""
+        w = max(800, self.width())
+        # Berechne relative Schriftgrößen
+        title_sz = max(28, int(w * 0.05))
+        header_sz = max(18, int(w * 0.025))
+        label_sz = max(14, int(w * 0.018))
+        btn_sz = max(14, int(w * 0.02))
+        text_sz = max(14, int(w * 0.02))
 
-        # Einfaches, responsives Design mit großen Schriftarten
-        self.setStyleSheet("""
-QMainWindow {
-    background-color: #0a0a0a;
+        stylesheet = f"""
+QMainWindow {{
+    background-color: #05060a; /* sehr dunkler Hintergrund */
     color: #00FFFF;
     font-family: 'Segoe UI', Arial, sans-serif;
-}
-QLabel {
-    color: #00FFFF;
-    font-size: 34px;
-    font-weight: bold;
-}
-QPushButton {
-                background-color: #1a1a2e;
-                border: 2px solid #00FFFF;
-                border-radius: 10px;
-                padding: 20px 30px;
-                color: #00FFFF;
-                font-size: 40px;
-                font-weight: bold;
-                min-height: 30px;
-            }
-            QPushButton:hover {
-                background-color: #16213e;
-                border-color: #66ddff;
-                color: #66ddff;
-            }
-            QPushButton:pressed {
-                background-color: #0f1729;
-            }
-            QTextEdit {
-                background-color: #1a1a2e;
-                border: 2px solid #00FFFF;
-                border-radius: 10px;
-                padding: 20px;
-                color: #00FFFF;
-                font-size: 36px;
-                line-height: 1.4;
-            }
-            QFrame {
-                background-color: rgba(26, 26, 46, 0.8);
-                border: 1px solid #00FFFF;
-                border-radius: 15px;
-                margin: 10px;
-            }
-        """)
-        
+}}
+/* Generelle Labels - Standardfarbe, Größe wird weiterhin per-widget angepasst */
+QLabel {{
+    color: #00f0ff;
+}}
+/* Buttons: flach, breit, neon-outline */
+QPushButton {{
+    background-color: #07101a;
+    border: 2px solid #00e6ff;
+    border-radius: 6px;
+    padding: 10px 18px;
+    color: #bffcff;
+    font-size: {max(12, btn_sz)}px;
+    font-weight: 600;
+    min-height: 36px;
+    text-transform: uppercase;
+}}
+QPushButton:hover {{
+    background-color: rgba(0,230,255,0.05);
+    border-color: #66f0ff;
+    color: #e6ffff;
+}}
+/* Chat and text areas */
+QTextEdit {{
+    background-color: #060607;
+    border: 2px solid #005f6b;
+    border-radius: 6px;
+    padding: 10px;
+    color: #cdeff0;
+    font-size: {max(12, text_sz)}px;
+}}
+/* Frames act as cards with neon border */
+QFrame {{
+    background-color: rgba(8,10,16,0.6);
+    border: 1px solid rgba(0,230,255,0.14);
+    border-radius: 8px;
+    margin: 8px;
+}}
+
+/* Tiny helpers for header/title */
+.jarvis-header QLabel {{
+    color: #00f0ff;
+}}
+
+"""
+        self.setStyleSheet(stylesheet)
+
         # Hauptlayout - einfach und vertikal
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -487,12 +510,18 @@ QPushButton {
         # Großer JARVIS Titel
         title = QLabel("J.A.R.V.I.S")
         title.setAlignment(Qt.AlignCenter)
+        title.setObjectName('jarvis_title')
         title.setStyleSheet("""
-            font-size: 80px;
-            font-weight: bold;
-            color: #00FFFF;
-            margin: 30px;
-            letter-spacing: 8px;
+            QLabel#jarvis_title {
+                font-size: 56px;
+                font-weight: 800;
+                color: #00f0ff;
+                margin: 18px 0px;
+                letter-spacing: 6px;
+                border-top: 2px solid rgba(0,230,255,0.08);
+                border-bottom: 2px solid rgba(0,230,255,0.08);
+                padding: 14px 0px;
+            }
         """)
         header_layout.addWidget(title)
         
@@ -500,10 +529,10 @@ QPushButton {
         self.main_status = QLabel("SYSTEM BEREIT")
         self.main_status.setAlignment(Qt.AlignCenter)
         self.main_status.setStyleSheet("""
-            font-size: 40px;
-            font-weight: bold;
-            color: #00FF00;
-            margin-bottom: 30px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #00ff70;
+            margin-bottom: 8px;
         """)
         header_layout.addWidget(self.main_status)
         
@@ -519,10 +548,10 @@ QPushButton {
         ai_layout = QVBoxLayout(ai_widget)
         ai_title = QLabel("KI KERN")
         ai_title.setAlignment(Qt.AlignCenter)
-        ai_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #00FFFF; margin-bottom: 15px;")
+        ai_title.setStyleSheet("font-size: 14px; font-weight: 700; color: #9ff8ff; margin-bottom: 8px;")
         self.ai_status = QLabel("AKTIV")
         self.ai_status.setAlignment(Qt.AlignCenter)
-        self.ai_status.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FF00;")
+        self.ai_status.setStyleSheet("font-size: 16px; font-weight: 800; color: #00ff70; background-color: rgba(0,0,0,0.15); padding:6px 12px; border-radius:8px;")
         ai_layout.addWidget(ai_title)
         ai_layout.addWidget(self.ai_status)
         
@@ -531,10 +560,10 @@ QPushButton {
         voice_layout = QVBoxLayout(voice_widget)
         voice_title = QLabel("SPRACHE")
         voice_title.setAlignment(Qt.AlignCenter)
-        voice_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #00FFFF; margin-bottom: 15px;")
+        voice_title.setStyleSheet("font-size: 14px; font-weight: 700; color: #9ff8ff; margin-bottom: 8px;")
         self.voice_status = QLabel("BEREIT")
         self.voice_status.setAlignment(Qt.AlignCenter)
-        self.voice_status.setStyleSheet("font-size: 40px; font-weight: bold; color: #FFA500;")
+        self.voice_status.setStyleSheet("font-size: 16px; font-weight: 800; color: #ffb050; background-color: rgba(0,0,0,0.15); padding:6px 12px; border-radius:8px;")
         voice_layout.addWidget(voice_title)
         voice_layout.addWidget(self.voice_status)
         
@@ -543,10 +572,10 @@ QPushButton {
         sys_layout = QVBoxLayout(sys_widget)
         sys_title = QLabel("SYSTEM")
         sys_title.setAlignment(Qt.AlignCenter)
-        sys_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #00FFFF; margin-bottom: 15px;")
+        sys_title.setStyleSheet("font-size: 14px; font-weight: 700; color: #9ff8ff; margin-bottom: 8px;")
         self.sys_status = QLabel("ONLINE")
         self.sys_status.setAlignment(Qt.AlignCenter)
-        self.sys_status.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FF00;")
+        self.sys_status.setStyleSheet("font-size: 16px; font-weight: 800; color: #00ff70; background-color: rgba(0,0,0,0.15); padding:6px 12px; border-radius:8px;")
         sys_layout.addWidget(sys_title)
         sys_layout.addWidget(self.sys_status)
         
@@ -564,75 +593,72 @@ QPushButton {
         
         # Chat Label
         chat_label = QLabel("KOMMUNIKATION")
-        chat_label.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FFFF; margin-bottom: 20px;")
+        chat_label.setStyleSheet("font-size: 16px; font-weight: 800; color: #9ff8ff; margin-bottom: 10px; border-bottom:1px solid rgba(0,230,255,0.06); padding-bottom:6px;")
         chat_layout.addWidget(chat_label)
         
         # Output Text - größer und klarer
         self.output_text = QTextEdit()
-        self.output_text.setMinimumHeight(180)
+        self.output_text.setMinimumHeight(220)
         self.output_text.setStyleSheet("""
-            font-size: 36px;
-            font-weight: bold;
-            background-color: #0d0d0d;
-            color: #ffffff;
-            border: 2px solid #00FFFF;
-            border-radius: 8px;
-            padding: 15px;
-            line-height: 1.5;
+            font-size: 13px;
+            background-color: #020203;
+            color: #bffcff;
+            border: 2px solid rgba(0,230,255,0.06);
+            border-radius: 6px;
+            padding: 12px;
         """)
-        self.output_text.append("<span style='color: #00FF00; font-size: 34px; font-weight: bold;'>[SYSTEM]</span> <span style='font-size: 40px;'>J.A.R.V.I.S ist online und bereit.</span>")
+        self.output_text.append("<span style='color: #00FF00; font-size: 14px; font-weight: bold;'>[SYSTEM]</span> <span style='font-size: 14px;'>J.A.R.V.I.S ist online und bereit.</span>")
         chat_layout.addWidget(self.output_text)
         
         # Input Bereich
         input_frame = QFrame()
         input_frame.setMinimumHeight(100)  # Mindesthöhe reduziert
         input_layout = QVBoxLayout(input_frame)
-        input_layout.setSpacing(25)
-        
+        input_layout.setSpacing(12)
+
         # Input Label
         input_label = QLabel("BEFEHLSEINGABE")
-        input_label.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FFFF;")
+        input_label.setStyleSheet("font-size: 14px; font-weight: 800; color: #9ff8ff;")
         input_layout.addWidget(input_label)
         
         # Input Text - größer und klarer
         self.input_text = QTextEdit()
-        self.input_text.setMaximumHeight(150)
+        self.input_text.setMaximumHeight(120)
         self.input_text.setStyleSheet("""
-            font-size: 40px;
-            font-weight: bold;
-            padding: 15px;
-            background-color: #1a1a1a;
-            color: #ffffff;
-            border: 2px solid #00FFFF;
-            border-radius: 8px;
+            font-size: 13px;
+            padding: 12px;
+            background-color: #040506;
+            color: #cfeff0;
+            border: 2px solid rgba(0,230,255,0.06);
+            border-radius: 6px;
         """)
         self.input_text.setPlaceholderText("Geben Sie Ihren Befehl ein oder verwenden Sie das Mikrofon...")
         input_layout.addWidget(self.input_text)
         
         # Buttons - deutlich größer und klarer
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(20)
+        button_layout.setSpacing(10)
         
         # Button-Style für alle Buttons
         button_style = """
             QPushButton {
-                font-size: 36px;
-                font-weight: bold;
-                padding: 15px 25px;
-                background-color: #2d2d2d;
-                color: #00FFFF;
-                border: 2px solid #00FFFF;
-                border-radius: 8px;
-                min-height: 50px;
+                font-size: 12px;
+                font-weight: 700;
+                padding: 10px 18px;
+                background-color: #07101a;
+                color: #bffcff;
+                border: 1px solid rgba(0,230,255,0.12);
+                border-radius: 6px;
+                min-height: 36px;
                 min-width: 140px;
             }
             QPushButton:hover {
-                background-color: #3d3d3d;
-                border-color: #00FF00;
-                color: #00FF00;
+                background-color: rgba(0,230,255,0.04);
+                border-color: #66f0ff;
+                color: #e6ffff;
             }
             QPushButton:pressed {
-                background-color: #1d1d1d;
+                background-color: #042028;
             }
         """
         
@@ -859,6 +885,11 @@ QPushButton {
         for btn in [getattr(self, n, None) for n in ["execute_button", "voice_button", "speech_to_text_button", "conversation_button", "diagnostics_button"]]:
             if btn:
                 btn.setFont(font)
+        # Aktualisiere das Stylesheet bei Resize für bessere Skalierung
+        try:
+            self._apply_responsive_styles()
+        except Exception:
+            pass
         super().resizeEvent(event)
 
 def main():
