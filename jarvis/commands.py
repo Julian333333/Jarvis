@@ -55,6 +55,15 @@ class CommandProcessor:
             'aufhören': self.stop_listening,
             'schluss': self.stop_listening,
             'beenden': self.exit_jarvis,
+
+            # Stimme klonen (lokal)
+            'stimme klonen': self.enable_cloned_voice,
+            'klonstimme aktivieren': self.enable_cloned_voice,
+            'klonstimme deaktivieren': self.disable_cloned_voice,
+            'stimmprobe setzen': self.set_voice_sample,
+            'stimmprobe abspielen': self.play_voice_sample,
+            'klon status': self.clone_status,
+            'klonstatus': self.clone_status,
             
             # Datei Operationen
             'erstelle': self.create_file,
@@ -282,6 +291,72 @@ JARVIS:
         if self.jarvis_gui:
             self.jarvis_gui.close()
         return "JARVIS wird beendet."
+
+    # Geklonte Stimme (lokaler Server)
+    def enable_cloned_voice(self, command: str) -> str:
+        """Aktiviert die geklonte Stimme. Optional mit Pfad: 'Stimme klonen C:\\Pfad\\zu\\sample.wav'"""
+        speaker_wav = None
+        parts = command.split()
+        if len(parts) > 2:
+            speaker_wav = command.split(' ', 2)[2].strip().strip('"')
+        if self.jarvis_gui and hasattr(self.jarvis_gui, 'voice'):
+            ok = self.jarvis_gui.voice.enable_cloned_voice(speaker_wav=speaker_wav)
+            if ok:
+                return "Geklonte Stimme aktiviert."
+            return "Konnte geklonte Stimme nicht aktivieren. Stellen Sie sicher, dass der lokale TTS-Server läuft und eine Stimmprobe vorhanden ist."
+        return "Kein Voice-Controller gefunden."
+
+    def disable_cloned_voice(self, command: str) -> str:
+        if self.jarvis_gui and hasattr(self.jarvis_gui, 'voice'):
+            self.jarvis_gui.voice.disable_cloned_voice()
+            return "Geklonte Stimme deaktiviert. Standard-TTS aktiv."
+        return "Kein Voice-Controller gefunden."
+
+    def set_voice_sample(self, command: str) -> str:
+        """Setzt den Pfad zur Stimmprobe: 'Stimmprobe setzen C:\\Pfad\\sample.wav'"""
+        if self.jarvis_gui and hasattr(self.jarvis_gui, 'voice'):
+            parts = command.split(' ', 2)
+            if len(parts) >= 3:
+                path = parts[2].strip().strip('"')
+                if os.path.exists(path):
+                    self.jarvis_gui.voice.cloned_speaker_wav = path
+                    return f"Stimmprobe gesetzt: {path}"
+                return "Pfad existiert nicht."
+            return "Bitte Pfad zur Stimmprobe angeben."
+        return "Kein Voice-Controller gefunden."
+
+    def play_voice_sample(self, command: str) -> str:
+        """Spielt die aktuelle Stimmprobe lokal ab."""
+        if not (self.jarvis_gui and hasattr(self.jarvis_gui, 'voice')):
+            return "Kein Voice-Controller gefunden."
+        sample = getattr(self.jarvis_gui.voice, 'cloned_speaker_wav', None)
+        if not sample or not os.path.exists(sample):
+            return "Keine Stimmprobe gefunden. Setzen Sie zuerst eine Datei mit 'Stimmprobe setzen ...'."
+        try:
+            # winsound spielt nur WAV direkt ab; für MP3 den Standardplayer nutzen
+            if sample.lower().endswith('.mp3'):
+                os.startfile(sample)  # Öffnet mit Standard-App unter Windows
+                return f"Stimmprobe (MP3) mit Standardplayer geöffnet: {sample}"
+            import winsound
+            winsound.PlaySound(sample, winsound.SND_FILENAME)
+            return f"Stimmprobe (WAV) abgespielt: {sample}"
+        except Exception as e:
+            return f"Konnte Stimmprobe nicht abspielen: {e}"
+
+    def clone_status(self, command: str) -> str:
+        """Zeigt den Status der geklonten Stimme und Server-Erreichbarkeit."""
+        if not (self.jarvis_gui and hasattr(self.jarvis_gui, 'voice')):
+            return "Kein Voice-Controller gefunden."
+        v = self.jarvis_gui.voice
+        sample = v.cloned_speaker_wav or "(keine)"
+        # Probe ohne Fehler durchzureichen
+        reachable = False
+        try:
+            reachable = bool(v._probe_cloned_ready())
+        except Exception:
+            reachable = False
+        mode = getattr(v, 'tts_mode', 'standard')
+        return f"Klonstatus: Modus={mode}, Server={'erreichbar' if reachable else 'nicht erreichbar'}, Stimmprobe={sample}"
     
     # Datei Operationen
     def create_file(self, command: str) -> str:

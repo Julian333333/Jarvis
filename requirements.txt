@@ -5,5 +5,10 @@ requests==2.31.0
 pywin32==306
 pyaudio
 psutil==6.1.0
-elevenlabs>=0.2.0
 pygame>=2.0.0
+pygame>=2.0.0
+
+# Optional: Lokaler TTS-Server (zum Testen der /tts-Schnittstelle)
+fastapi==0.115.0
+uvicorn==0.30.6
+numpy==2.1.1

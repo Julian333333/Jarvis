@@ -3,6 +3,7 @@ Jarvis AI Assistant - Main Application
 """
 
 import sys
+import os
 import threading
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
                              QWidget, QLabel, QPushButton, QTextEdit, QFrame)
@@ -13,6 +14,7 @@ import speech_recognition as sr
 from .ai import AIAssistant
 from .windows_integration import WindowsIntegration
 from .commands import CommandProcessor
+from .audio_utils import convert_audio_to_wav, default_user_sample_path
 
 class VoiceController(QObject):
     command_received = pyqtSignal(str)
@@ -27,9 +29,18 @@ class VoiceController(QObject):
         self.continuous_listening = False  # Für kontinuierliche Spracherkennung
         self.conversation_mode = False  # Für kontinuierliche Konversation
         self.activation_word = "jarvis"
+
+        # Klon-Stimme: Standard/Cloned
+        self.tts_mode = 'standard'
+        # Lokaler TTS-Server (OpenVoice/XTTS v2 o.ä.)
+        self.cloned_server_url = "http://127.0.0.1:5005/tts"
+        # Pfad zur Referenzaufnahme (Ihre Stimme, WAV 16kHz mono)
+        self.cloned_speaker_wav = None
         
         # TTS-Engine konfigurieren für bessere deutsche Sprache
         self._setup_tts_engine()
+        # Stelle sicher, dass ggf. Danielv1.mp3 als Referenz-WAV verfügbar ist
+        self._ensure_default_voice_sample()
     
     def _setup_tts_engine(self):
         """Konfiguriert die Text-to-Speech Engine für optimale deutsche Ausgabe"""
@@ -103,7 +114,13 @@ class VoiceController(QObject):
             print(f"⚠️ Sprachtest Fehler: {e}")
     
     def speak(self, text):
-        """Spricht den gegebenen Text aus mit deutscher TTS"""
+        """Spricht den gegebenen Text aus (Cloned-Voice, wenn aktiv)"""
+        if self.tts_mode == 'cloned' and self.cloned_speaker_wav:
+            print("🎭 Klon-Stimme aktiv – generiere Audio...")
+            ok = self._speak_cloned(text)
+            if ok:
+                return
+            print("⚠️ Geklonte Stimme nicht verfügbar – Fallback auf Standard-TTS")
         self._speak_standard(text)
     
     def _speak_standard(self, text):
@@ -176,6 +193,123 @@ class VoiceController(QObject):
         text = text.replace('? ', '? ')   # Pause nach Fragezeichen
         
         return text.strip()
+
+    def _ensure_default_voice_sample(self):
+        """Wenn Danielv1.mp3 vorhanden ist und reference.wav fehlt, konvertiere automatisch."""
+        try:
+            proj_root = os.path.dirname(os.path.dirname(__file__))
+            src_wav = os.path.join(proj_root, 'Danielv1.wav')
+            src_mp3 = os.path.join(proj_root, 'Danielv1.mp3')
+            dst_wav = default_user_sample_path()
+            # Bevorzuge direkt die WAV falls vorhanden
+            if os.path.exists(src_wav):
+                os.makedirs(os.path.dirname(dst_wav), exist_ok=True)
+                try:
+                    # Kopiere WAV als reference.wav
+                    import shutil
+                    shutil.copyfile(src_wav, dst_wav)
+                    self.cloned_speaker_wav = dst_wav
+                    print(f"✅ Stimmprobe gesetzt (WAV): {src_wav} -> {dst_wav}")
+                    return
+                except Exception as e:
+                    print(f"⚠️ Konnte WAV nicht kopieren: {e}")
+
+            if os.path.exists(src_mp3) and not os.path.exists(dst_wav):
+                os.makedirs(os.path.dirname(dst_wav), exist_ok=True)
+                ok = convert_audio_to_wav(src_mp3, dst_wav, sample_rate=16000, channels=1)
+                if ok:
+                    print(f"✅ Stimmprobe konvertiert: {src_mp3} -> {dst_wav}")
+                    self.cloned_speaker_wav = dst_wav
+                else:
+                    print("⚠️ Konnte Danielv1.mp3 nicht in WAV konvertieren. Verwende MP3 direkt (abhängig vom Server).")
+                    self.cloned_speaker_wav = src_mp3
+            elif os.path.exists(dst_wav):
+                self.cloned_speaker_wav = dst_wav
+            elif os.path.exists(src_mp3):
+                # Falls keine WAV existiert, aber MP3 vorhanden ist
+                self.cloned_speaker_wav = src_mp3
+        except Exception as e:
+            print(f"⚠️ Fehler beim Vorbereiten der Stimmprobe: {e}")
+
+    # ====== Geklonte Stimme (lokaler Server) ======
+    def enable_cloned_voice(self, speaker_wav: str = None, server_url: str = None) -> bool:
+        """Aktiviert die geklonte Stimme über einen lokalen TTS-Server.
+
+        Args:
+            speaker_wav: Pfad zur Stimmprobe (WAV 16kHz mono empfohlen)
+            server_url: URL des lokalen TTS-Servers (Default: http://127.0.0.1:5005/tts)
+        """
+        if server_url:
+            self.cloned_server_url = server_url
+        # Speaker WAV bestimmen
+        if speaker_wav and os.path.exists(speaker_wav):
+            self.cloned_speaker_wav = speaker_wav
+        else:
+            # Standardpfad im Projekt: voices/user/samples/reference.wav
+            proj_root = os.path.dirname(os.path.dirname(__file__))
+            default_wav = os.path.join(proj_root, 'voices', 'user', 'samples', 'reference.wav')
+            if os.path.exists(default_wav):
+                self.cloned_speaker_wav = default_wav
+            else:
+                print("⚠️ Keine Stimmprobe gefunden. Legen Sie eine WAV-Datei unter voices/user/samples/reference.wav an oder übergeben Sie den Pfad.")
+                return False
+        # Probe
+        if self._probe_cloned_ready():
+            self.tts_mode = 'cloned'
+            print("✅ Geklonte Stimme aktiviert")
+            return True
+        print("❌ Cloned-Voice Server nicht erreichbar")
+        return False
+
+    def disable_cloned_voice(self):
+        self.tts_mode = 'standard'
+        print("🔄 Geklonte Stimme deaktiviert – Standard-TTS aktiv")
+
+    def _probe_cloned_ready(self) -> bool:
+        return bool(self._post_tts_request("Test der geklonten Stimme.", dry_run=True))
+
+    def _speak_cloned(self, text: str) -> bool:
+        try:
+            wav_bytes = self._post_tts_request(text)
+            if not wav_bytes:
+                return False
+            import tempfile, winsound
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+                f.write(wav_bytes)
+                tmp = f.name
+            try:
+                winsound.PlaySound(tmp, winsound.SND_FILENAME)
+            finally:
+                try:
+                    os.unlink(tmp)
+                except Exception:
+                    pass
+            return True
+        except Exception as e:
+            print(f"❌ Cloned-Voice Fehler: {e}")
+            return False
+
+    def _post_tts_request(self, text: str, dry_run: bool = False):
+        """POST-Request an den lokalen TTS-Server. Liefert WAV-Bytes oder True bei dry_run."""
+        try:
+            import json
+            from urllib import request
+            data = {
+                'text': text,
+                'speaker_wav': self.cloned_speaker_wav,
+                'sample_rate': 22050
+            }
+            req = request.Request(self.cloned_server_url, data=json.dumps(data).encode('utf-8'), headers={'Content-Type': 'application/json'})
+            with request.urlopen(req, timeout=30) as resp:
+                if dry_run:
+                    return True
+                return resp.read()
+        except Exception as e:
+            if dry_run:
+                print(f"❌ Cloned-Voice Probe fehlgeschlagen: {e}")
+                return False
+            print(f"❌ TTS-Server Anfrage fehlgeschlagen: {e}")
+            return None
     
     def listen_for_activation(self):
         with sr.Microphone() as source:
@@ -717,6 +851,17 @@ def main():
     app.setFont(font)
     
     window = JarvisGUI()
+    
+    # Versuche geklonte Stimme automatisch zu aktivieren, wenn eine Stimmprobe vorhanden ist
+    try:
+        if getattr(window, 'voice', None) and window.voice.cloned_speaker_wav and os.path.exists(window.voice.cloned_speaker_wav):
+            # Nur Probe; nicht erzwingen, falls Server nicht läuft
+            if window.voice.enable_cloned_voice(speaker_wav=window.voice.cloned_speaker_wav):
+                print("✅ Geklonte Stimme automatisch aktiviert")
+            else:
+                print("ℹ️ Klonstimme nicht aktiv – Standard-TTS aktiv")
+    except Exception as e:
+        print(f"ℹ️ Klonstimme Auto-Aktivierung übersprungen: {e}")
     
     print("🎤 Deutsche TTS-Stimme aktiviert - JARVIS bereit!")
     
