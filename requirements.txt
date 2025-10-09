@@ -6,9 +6,12 @@ pywin32==306
 pyaudio
 psutil==6.1.0
 pygame>=2.0.0
-pygame>=2.0.0
 
 # Optional: Lokaler TTS-Server (zum Testen der /tts-Schnittstelle)
 fastapi==0.115.0
 uvicorn==0.30.6
 numpy==2.1.1
+
+# Optional: Audio-Verarbeitung für erweiterte Features
+soundfile>=0.12.1
+librosa>=0.10.0

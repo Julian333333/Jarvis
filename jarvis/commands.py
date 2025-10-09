@@ -98,24 +98,44 @@ class CommandProcessor:
     # System Befehle
     def get_time(self, command: str) -> str:
         now = datetime.datetime.now()
-        return f"Es ist {now.strftime('%H:%M')} Uhr."
+        hour = now.hour
+        # Iron Man style responses based on time of day
+        if 5 <= hour < 12:
+            greeting = "Guten Morgen, Daddy. "
+        elif 12 <= hour < 18:
+            greeting = "Daddy, "
+        elif 18 <= hour < 22:
+            greeting = "Guten Abend, Daddy. "
+        else:
+            greeting = "Daddy, es ist spät. "
+        return f"{greeting}Es ist {now.strftime('%H:%M')} Uhr."
     
     def get_date(self, command: str) -> str:
         now = datetime.datetime.now()
-        return f"Heute ist {now.strftime('%d.%m.%Y')}."
+        weekday = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'][now.weekday()]
+        return f"Heute ist {weekday}, der {now.strftime('%d.%m.%Y')}, Daddy."
     
     def get_system_info(self, command: str) -> str:
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
-        return f"CPU Auslastung: {cpu_percent}%, Arbeitsspeicher: {memory.percent}% verwendet."
+        
+        # Performance assessment
+        if cpu_percent < 50 and memory.percent < 60:
+            status = "Alle Systeme laufen optimal, Daddy."
+        elif cpu_percent < 75 and memory.percent < 80:
+            status = "Systeme arbeiten im normalen Bereich, Daddy."
+        else:
+            status = "Hohe Systemauslastung erkannt, Daddy."
+        
+        return f"{status} CPU: {cpu_percent}%, RAM: {memory.percent}% belegt."
     
     def shutdown_system(self, command: str) -> str:
         subprocess.Popen("shutdown /s /t 10", shell=True)
-        return "System wird in 10 Sekunden heruntergefahren."
+        return "Verstanden, Daddy. System fährt in 10 Sekunden herunter. Bis bald."
     
     def restart_system(self, command: str) -> str:
         subprocess.Popen("shutdown /r /t 10", shell=True)
-        return "System wird in 10 Sekunden neu gestartet."
+        return "Neustart eingeleitet, Daddy. System startet in 10 Sekunden neu."
     
     def control_volume(self, command: str) -> str:
         if 'hoch' in command or 'lauter' in command:
@@ -133,51 +153,51 @@ class CommandProcessor:
     # Anwendungen
     def open_application(self, command: str) -> str:
         apps = {
-            'notepad': 'notepad.exe',
-            'editor': 'notepad.exe',
-            'rechner': 'calc.exe',
-            'taschenrechner': 'calc.exe',
-            'calculator': 'calc.exe',
-            'explorer': 'explorer.exe',
-            'browser': 'msedge.exe',
-            'edge': 'msedge.exe',
-            'chrome': 'chrome.exe',
-            'firefox': 'firefox.exe',
-            'paint': 'mspaint.exe',
-            'cmd': 'cmd.exe',
-            'terminal': 'cmd.exe',
-            'powershell': 'powershell.exe',
+            'notepad': ('notepad.exe', 'Texteditor'),
+            'editor': ('notepad.exe', 'Texteditor'),
+            'rechner': ('calc.exe', 'Rechner'),
+            'taschenrechner': ('calc.exe', 'Rechner'),
+            'calculator': ('calc.exe', 'Rechner'),
+            'explorer': ('explorer.exe', 'Datei-Explorer'),
+            'browser': ('msedge.exe', 'Browser'),
+            'edge': ('msedge.exe', 'Edge Browser'),
+            'chrome': ('chrome.exe', 'Chrome'),
+            'firefox': ('firefox.exe', 'Firefox'),
+            'paint': ('mspaint.exe', 'Paint'),
+            'cmd': ('cmd.exe', 'Kommandozeile'),
+            'terminal': ('cmd.exe', 'Terminal'),
+            'powershell': ('powershell.exe', 'PowerShell'),
         }
         
-        for app_name, exe_name in apps.items():
+        for app_name, (exe_name, display_name) in apps.items():
             if app_name in command:
                 try:
                     subprocess.Popen(exe_name, shell=True)
-                    return f"{app_name.title()} wurde geöffnet."
+                    return f"{display_name} gestartet, Daddy."
                 except Exception:
-                    return f"Konnte {app_name} nicht öffnen."
+                    return f"Konnte {display_name} nicht öffnen, Daddy. Möglicherweise nicht installiert."
         
-        return "Anwendung nicht gefunden. Verfügbare Apps: " + ", ".join(apps.keys())
+        return "Anwendung nicht gefunden, Daddy. Sagen Sie 'Hilfe' für verfügbare Befehle."
     
     def close_application(self, command: str) -> str:
         # Vereinfachte Version - könnte erweitert werden
-        return "Anwendung schließen nicht implementiert. Verwenden Sie Alt+F4."
+        return "Zum Schließen von Anwendungen verwenden Sie Alt+F4, Daddy, oder ich kann eine Prozessverwaltung für Sie implementieren."
     
     def open_browser(self, command: str) -> str:
         webbrowser.open('https://www.google.com')
-        return "Browser wurde geöffnet."
+        return "Browser geöffnet, Daddy. Navigiere zu Google."
     
     def open_notepad(self, command: str) -> str:
         subprocess.Popen('notepad.exe')
-        return "Notepad wurde geöffnet."
+        return "Texteditor bereit, Daddy."
     
     def open_calculator(self, command: str) -> str:
         subprocess.Popen('calc.exe')
-        return "Rechner wurde geöffnet."
+        return "Rechner geöffnet, Daddy. Benötigen Sie weitere Berechnungen?"
     
     def open_explorer(self, command: str) -> str:
         subprocess.Popen('explorer.exe')
-        return "Windows Explorer wurde geöffnet."
+        return "Datei-Explorer geöffnet, Daddy."
     
     # Web Suche
     def web_search(self, command: str) -> str:
@@ -187,8 +207,8 @@ class CommandProcessor:
             if search_term:
                 url = f"https://www.google.com/search?q={search_term.replace(' ', '+')}"
                 webbrowser.open(url)
-                return f"Suche nach '{search_term}' in Google geöffnet."
-        return "Bitte spezifizieren Sie den Suchbegriff."
+                return f"Durchsuche das Internet nach '{search_term}' für Sie, Daddy."
+        return "Wonach soll ich suchen, Daddy?"
     
     def google_search(self, command: str) -> str:
         return self.web_search(command.replace('google', 'suche'))
@@ -199,8 +219,8 @@ class CommandProcessor:
             if search_term:
                 url = f"https://www.youtube.com/results?search_query={search_term.replace(' ', '+')}"
                 webbrowser.open(url)
-                return f"YouTube Suche nach '{search_term}' geöffnet."
-        return "Bitte spezifizieren Sie den Suchbegriff für YouTube."
+                return f"Suche nach '{search_term}' auf YouTube, Daddy. Einen Moment."
+        return "Was möchten Sie auf YouTube finden, Daddy?"
     
     def wikipedia_search(self, command: str) -> str:
         if 'wikipedia' in command:
@@ -208,8 +228,8 @@ class CommandProcessor:
             if search_term:
                 url = f"https://de.wikipedia.org/wiki/{search_term.replace(' ', '_')}"
                 webbrowser.open(url)
-                return f"Wikipedia Artikel zu '{search_term}' geöffnet."
-        return "Bitte spezifizieren Sie den Suchbegriff für Wikipedia."
+                return f"Rufe Wikipedia-Artikel zu '{search_term}' auf, Daddy."
+        return "Zu welchem Thema soll ich Wikipedia öffnen, Daddy?"
     
     # JARVIS Steuerung
     def show_help(self, command: str) -> str:

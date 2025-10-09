@@ -6,7 +6,7 @@ import sys
 import os
 import threading
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
-                             QWidget, QLabel, QPushButton, QTextEdit, QFrame, QSizePolicy)
+                             QWidget, QLabel, QPushButton, QTextEdit, QFrame, QSizePolicy, QBoxLayout)
 from PyQt5.QtCore import QTimer, pyqtSignal, QObject, Qt
 from PyQt5.QtGui import QFont, QPainter, QPen, QColor
 import pyttsx3
@@ -393,75 +393,151 @@ class VoiceController(QObject):
         self.conversation_mode = False
 
 class JarvisGUI(QMainWindow):
+    ai_response_ready = pyqtSignal(str)
     def __init__(self):
         super().__init__()
         self.setWindowTitle("J.A.R.V.I.S")
-        # Optimale Startgröße für Full HD (1920x1080)
-        self.setGeometry(100, 100, 1600, 900)
-        self.setMinimumSize(1280, 720)
+        # Kompakte Größe die auf die meisten Bildschirme passt
+        self.setGeometry(100, 50, 1400, 800)
+        self.setMinimumSize(1100, 650)
 
-        # Einfaches, responsives Design mit großen Schriftarten
+        # Modern Glass-Morphism Design with Gradients
         self.setStyleSheet("""
 QMainWindow {
-    background-color: #0a0a0a;
+    background: qlineargradient(
+        x1:0, y1:0, x2:1, y2:1,
+        stop:0 #0a0a15,
+        stop:0.5 #0d0d1a,
+        stop:1 #0a0a15
+    );
     color: #00FFFF;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
 }
+
 QLabel {
     color: #00FFFF;
     font-size: 34px;
-    font-weight: bold;
+    font-weight: 600;
+    background: transparent;
 }
+
 QPushButton {
-                background-color: #1a1a2e;
-                border: 2px solid #00FFFF;
-                border-radius: 10px;
-                padding: 20px 30px;
-                color: #00FFFF;
-                font-size: 40px;
-                font-weight: bold;
-                min-height: 30px;
-            }
-            QPushButton:hover {
-                background-color: #16213e;
-                border-color: #66ddff;
-                color: #66ddff;
-            }
-            QPushButton:pressed {
-                background-color: #0f1729;
-            }
-            QTextEdit {
-                background-color: #1a1a2e;
-                border: 2px solid #00FFFF;
-                border-radius: 10px;
-                padding: 20px;
-                color: #00FFFF;
-                font-size: 36px;
-                line-height: 1.4;
-            }
-            QFrame {
-                background-color: rgba(26, 26, 46, 0.8);
-                border: 1px solid #00FFFF;
-                border-radius: 15px;
-                margin: 10px;
-            }
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(0, 255, 255, 0.15),
+        stop:1 rgba(0, 200, 255, 0.1)
+    );
+    border: 2px solid rgba(0, 255, 255, 0.4);
+    border-radius: 12px;
+    padding: 18px 28px;
+    color: #00FFFF;
+    font-size: 38px;
+    font-weight: 600;
+    min-height: 35px;
+    text-align: center;
+}
+
+QPushButton:hover {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(0, 255, 255, 0.25),
+        stop:1 rgba(0, 220, 255, 0.2)
+    );
+    border: 2px solid rgba(0, 255, 255, 0.7);
+    color: #66FFFF;
+}
+
+QPushButton:pressed {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(0, 255, 255, 0.1),
+        stop:1 rgba(0, 180, 255, 0.08)
+    );
+    border: 2px solid rgba(0, 255, 255, 0.5);
+    padding-top: 20px;
+}
+
+QTextEdit {
+    background: rgba(15, 20, 35, 0.6);
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 18px;
+    color: #E0F8FF;
+    font-size: 34px;
+    font-weight: 500;
+    selection-background-color: rgba(0, 255, 255, 0.3);
+    selection-color: #FFFFFF;
+}
+
+QTextEdit:focus {
+    border: 2px solid rgba(0, 255, 255, 0.6);
+    background: rgba(15, 20, 35, 0.75);
+}
+
+QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:1, y2:1,
+        stop:0 rgba(20, 30, 50, 0.4),
+        stop:1 rgba(15, 25, 45, 0.3)
+    );
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 16px;
+    margin: 8px;
+}
+
+QScrollBar:vertical {
+    background: rgba(15, 20, 35, 0.4);
+    width: 12px;
+    border-radius: 6px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: rgba(0, 255, 255, 0.4);
+    border-radius: 6px;
+    min-height: 30px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: rgba(0, 255, 255, 0.6);
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    background: rgba(15, 20, 35, 0.4);
+    height: 12px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal {
+    background: rgba(0, 255, 255, 0.4);
+    border-radius: 6px;
+    min-width: 30px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: rgba(0, 255, 255, 0.6);
+}
         """)
         
-        # Hauptlayout - einfach und vertikal
+        # Hauptlayout - kompakt
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setSpacing(30)
-        main_layout.setContentsMargins(40, 40, 40, 40)
-        
+        self.main_layout = QVBoxLayout(central_widget)
+        self.main_layout.setSpacing(15)
+        self.main_layout.setContentsMargins(20, 20, 20, 20)
+
         # Header - groß und einfach
-        self.create_header(main_layout)
-        
+        self.create_header(self.main_layout)
+
         # Status Bereich
-        self.create_status_section(main_layout)
-        
+        self.create_status_section(self.main_layout)
+
         # Hauptinterface
-        self.create_main_interface(main_layout)
+        self.create_main_interface(self.main_layout)
         
         # Komponenten initialisieren
         self.ai = AIAssistant()
@@ -479,31 +555,57 @@ QPushButton {
         self.update_timer.timeout.connect(self.update_status)
         self.update_timer.start(2000)
         
+        # Timer für periodische Clone-Server-Prüfung (alle 30 Sekunden)
+        self.clone_check_timer = QTimer()
+        self.clone_check_timer.timeout.connect(self.periodic_clone_check)
+        self.clone_check_timer.start(30000)  # 30 Sekunden
+
+        # Asynchrone AI-Antworten (UI bleibt responsiv)
+        self.ai_response_ready.connect(self.on_ai_response)
+        
     def create_header(self, layout):
         header_frame = QFrame()
-        header_layout = QVBoxLayout(header_frame)
-        header_layout.setSpacing(20)
-        
-        # Großer JARVIS Titel
-        title = QLabel("J.A.R.V.I.S")
-        title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet("""
-            font-size: 80px;
-            font-weight: bold;
-            color: #00FFFF;
-            margin: 30px;
-            letter-spacing: 8px;
+        header_frame.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(0, 255, 255, 0.05),
+                    stop:0.5 rgba(0, 200, 255, 0.1),
+                    stop:1 rgba(0, 255, 255, 0.05)
+                );
+                border: 2px solid rgba(0, 255, 255, 0.3);
+                border-radius: 16px;
+                padding: 15px;
+                margin: 0px;
+            }
         """)
-        header_layout.addWidget(title)
+        header_layout = QVBoxLayout(header_frame)
+        header_layout.setSpacing(8)
+        header_layout.setContentsMargins(12, 12, 12, 12)
         
-        # Status
-        self.main_status = QLabel("SYSTEM BEREIT")
+        # Kompakterer JARVIS Titel
+        self.title_label = QLabel("J.A.R.V.I.S")
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setStyleSheet("""
+            font-size: 58px;
+            font-weight: 800;
+            color: #00FFFF;
+            letter-spacing: 8px;
+            background: transparent;
+            margin: 5px;
+        """)
+        header_layout.addWidget(self.title_label)
+        
+        # Kompakterer Status
+        self.main_status = QLabel("● SYSTEM BEREIT")
         self.main_status.setAlignment(Qt.AlignCenter)
         self.main_status.setStyleSheet("""
-            font-size: 40px;
-            font-weight: bold;
-            color: #00FF00;
-            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+            color: #00FF88;
+            background: transparent;
+            margin: 3px;
+            letter-spacing: 2px;
         """)
         header_layout.addWidget(self.main_status)
         
@@ -511,166 +613,435 @@ QPushButton {
         
     def create_status_section(self, layout):
         status_frame = QFrame()
-        status_layout = QHBoxLayout(status_frame)
-        status_layout.setSpacing(60)
+        status_frame.setStyleSheet("""
+            QFrame {
+                background: transparent;
+                border: none;
+                padding: 0px;
+                margin: 0px;
+            }
+        """)
+        self.status_layout = QHBoxLayout(status_frame)
+        self.status_layout.setSpacing(20)
         
-        # AI Status
-        ai_widget = QWidget()
-        ai_layout = QVBoxLayout(ai_widget)
-        ai_title = QLabel("KI KERN")
-        ai_title.setAlignment(Qt.AlignCenter)
-        ai_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #00FFFF; margin-bottom: 15px;")
-        self.ai_status = QLabel("AKTIV")
-        self.ai_status.setAlignment(Qt.AlignCenter)
-        self.ai_status.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FF00;")
-        ai_layout.addWidget(ai_title)
-        ai_layout.addWidget(self.ai_status)
+        # Helper function to create modern status cards
+        def create_status_card(title, status, icon="●"):
+            card = QFrame()
+            card.setStyleSheet("""
+                QFrame {
+                    background: qlineargradient(
+                        x1:0, y1:0, x2:0, y2:1,
+                        stop:0 rgba(0, 255, 255, 0.12),
+                        stop:1 rgba(0, 200, 255, 0.08)
+                    );
+                    border: 2px solid rgba(0, 255, 255, 0.35);
+                    border-radius: 14px;
+                    padding: 12px;
+                    margin: 0px;
+                }
+            """)
+            card_layout = QVBoxLayout(card)
+            card_layout.setSpacing(6)
+            card_layout.setContentsMargins(10, 10, 10, 10)
+            
+            title_label = QLabel(title)
+            title_label.setAlignment(Qt.AlignCenter)
+            title_label.setStyleSheet("""
+                font-size: 20px;
+                font-weight: 700;
+                color: rgba(0, 255, 255, 0.9);
+                background: transparent;
+                letter-spacing: 1px;
+                margin-bottom: 4px;
+            """)
+            
+            status_label = QLabel(f"{icon} {status}")
+            status_label.setAlignment(Qt.AlignCenter)
+            status_label.setStyleSheet("""
+                font-size: 26px;
+                font-weight: 600;
+                color: #00FF88;
+                background: transparent;
+                letter-spacing: 0px;
+            """)
+            
+            card_layout.addWidget(title_label)
+            card_layout.addWidget(status_label)
+            return card, title_label, status_label
         
-        # Voice Status
-        voice_widget = QWidget()
-        voice_layout = QVBoxLayout(voice_widget)
-        voice_title = QLabel("SPRACHE")
-        voice_title.setAlignment(Qt.AlignCenter)
-        voice_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #00FFFF; margin-bottom: 15px;")
-        self.voice_status = QLabel("BEREIT")
+        # AI Status Card
+        ai_card, self.ai_title_label, self.ai_status = create_status_card("🤖 KI KERN", "AKTIV", "●")
+        
+        # Voice Status Card (with clone indicator)
+        voice_card = QFrame()
+        voice_card.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(0, 255, 255, 0.12),
+                    stop:1 rgba(0, 200, 255, 0.08)
+                );
+                border: 2px solid rgba(0, 255, 255, 0.35);
+                border-radius: 14px;
+                padding: 12px;
+                margin: 0px;
+            }
+        """)
+        voice_layout = QVBoxLayout(voice_card)
+        voice_layout.setSpacing(4)
+        voice_layout.setContentsMargins(10, 10, 10, 10)
+        
+        self.voice_title_label = QLabel("🎤 SPRACHE")
+        self.voice_title_label.setAlignment(Qt.AlignCenter)
+        self.voice_title_label.setStyleSheet("""
+            font-size: 20px;
+            font-weight: 700;
+            color: rgba(0, 255, 255, 0.9);
+            background: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        """)
+        
+        self.voice_status = QLabel("● BEREIT")
         self.voice_status.setAlignment(Qt.AlignCenter)
-        self.voice_status.setStyleSheet("font-size: 40px; font-weight: bold; color: #FFA500;")
-        voice_layout.addWidget(voice_title)
+        self.voice_status.setStyleSheet("""
+            font-size: 26px;
+            font-weight: 600;
+            color: #FFA500;
+            background: transparent;
+            letter-spacing: 0px;
+        """)
+        
+        self.clone_status_label = QLabel("📢 STANDARD")
+        self.clone_status_label.setAlignment(Qt.AlignCenter)
+        self.clone_status_label.setStyleSheet("""
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(255, 165, 0, 0.8);
+            background: transparent;
+            margin-top: 4px;
+            letter-spacing: 0px;
+        """)
+        
+        voice_layout.addWidget(self.voice_title_label)
         voice_layout.addWidget(self.voice_status)
+        voice_layout.addWidget(self.clone_status_label)
         
-        # System Status
-        sys_widget = QWidget()
-        sys_layout = QVBoxLayout(sys_widget)
-        sys_title = QLabel("SYSTEM")
-        sys_title.setAlignment(Qt.AlignCenter)
-        sys_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #00FFFF; margin-bottom: 15px;")
-        self.sys_status = QLabel("ONLINE")
-        self.sys_status.setAlignment(Qt.AlignCenter)
-        self.sys_status.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FF00;")
-        sys_layout.addWidget(sys_title)
-        sys_layout.addWidget(self.sys_status)
+        # System Status Card
+        sys_card, self.sys_title_label, self.sys_status = create_status_card("💻 SYSTEM", "ONLINE", "●")
         
-        status_layout.addWidget(ai_widget)
-        status_layout.addWidget(voice_widget)
-        status_layout.addWidget(sys_widget)
+        self.status_layout.addWidget(ai_card)
+        self.status_layout.addWidget(voice_card)
+        self.status_layout.addWidget(sys_card)
         
         layout.addWidget(status_frame)
         
     def create_main_interface(self, layout):
-        # Chat Bereich
+        # Chat Bereich with modern card
         chat_frame = QFrame()
-        chat_layout = QVBoxLayout(chat_frame)
-        chat_layout.setSpacing(30)
+        chat_frame.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(15, 25, 40, 0.5),
+                    stop:1 rgba(10, 20, 35, 0.4)
+                );
+                border: 2px solid rgba(0, 255, 255, 0.3);
+                border-radius: 14px;
+                padding: 15px;
+                margin: 0px;
+            }
+        """)
+        self.chat_layout = QVBoxLayout(chat_frame)
+        self.chat_layout.setSpacing(12)
+        self.chat_layout.setContentsMargins(15, 15, 15, 15)
         
-        # Chat Label
-        chat_label = QLabel("KOMMUNIKATION")
-        chat_label.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FFFF; margin-bottom: 20px;")
-        chat_layout.addWidget(chat_label)
+        # Chat Label with icon - kompakter
+        self.chat_label = QLabel("💬 KOMMUNIKATION")
+        self.chat_label.setStyleSheet("""
+            font-size: 22px;
+            font-weight: 700;
+            color: rgba(0, 255, 255, 0.95);
+            background: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        """)
+        self.chat_layout.addWidget(self.chat_label)
         
-        # Output Text - größer und klarer
+        # Output Text - Kompakter
         self.output_text = QTextEdit()
-        self.output_text.setMinimumHeight(180)
+        self.output_text.setMinimumHeight(150)
         self.output_text.setStyleSheet("""
-            font-size: 36px;
-            font-weight: bold;
-            background-color: #0d0d0d;
-            color: #ffffff;
-            border: 2px solid #00FFFF;
-            border-radius: 8px;
-            padding: 15px;
-            line-height: 1.5;
+            QTextEdit {
+                font-size: 24px;
+                font-weight: 500;
+                background: rgba(8, 15, 28, 0.7);
+                color: #E8F8FF;
+                border: 2px solid rgba(0, 255, 255, 0.25);
+                border-radius: 12px;
+                padding: 12px;
+                line-height: 1.4;
+            }
+            QTextEdit:focus {
+                border: 2px solid rgba(0, 255, 255, 0.5);
+                background: rgba(8, 15, 28, 0.85);
+            }
         """)
-        self.output_text.append("<span style='color: #00FF00; font-size: 34px; font-weight: bold;'>[SYSTEM]</span> <span style='font-size: 40px;'>J.A.R.V.I.S ist online und bereit.</span>")
-        chat_layout.addWidget(self.output_text)
+        self.output_text.append("<span style='color: #00FF88; font-size: 22px; font-weight: 600;'>[SYSTEM]</span> <span style='font-size: 24px; color: #E8F8FF;'>● J.A.R.V.I.S ist online und bereit.</span>")
+        self.chat_layout.addWidget(self.output_text)
         
-        # Input Bereich
+        # Input Bereich with modern card - kompakter
         input_frame = QFrame()
-        input_frame.setMinimumHeight(100)  # Mindesthöhe reduziert
-        input_layout = QVBoxLayout(input_frame)
-        input_layout.setSpacing(25)
-        
-        # Input Label
-        input_label = QLabel("BEFEHLSEINGABE")
-        input_label.setStyleSheet("font-size: 40px; font-weight: bold; color: #00FFFF;")
-        input_layout.addWidget(input_label)
-        
-        # Input Text - größer und klarer
-        self.input_text = QTextEdit()
-        self.input_text.setMaximumHeight(150)
-        self.input_text.setStyleSheet("""
-            font-size: 40px;
-            font-weight: bold;
-            padding: 15px;
-            background-color: #1a1a1a;
-            color: #ffffff;
-            border: 2px solid #00FFFF;
-            border-radius: 8px;
+        input_frame.setStyleSheet("""
+            QFrame {
+                background: rgba(15, 25, 40, 0.35);
+                border: 2px solid rgba(0, 255, 255, 0.2);
+                border-radius: 12px;
+                padding: 12px;
+                margin: 3px 0px;
+            }
         """)
-        self.input_text.setPlaceholderText("Geben Sie Ihren Befehl ein oder verwenden Sie das Mikrofon...")
-        input_layout.addWidget(self.input_text)
+        input_frame.setMinimumHeight(60)
+        self.input_layout = QVBoxLayout(input_frame)
+        self.input_layout.setSpacing(8)
+        self.input_layout.setContentsMargins(10, 10, 10, 10)
         
-        # Buttons - deutlich größer und klarer
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(20)
+        # Input Label with icon - kompakter
+        self.input_label = QLabel("⌨️ EINGABE")
+        self.input_label.setStyleSheet("""
+            font-size: 18px;
+            font-weight: 600;
+            color: rgba(0, 255, 255, 0.85);
+            background: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        """)
+        self.input_layout.addWidget(self.input_label)
         
-        # Button-Style für alle Buttons
+        # Input Text - Kompakter
+        self.input_text = QTextEdit()
+        self.input_text.setMaximumHeight(70)
+        self.input_text.setStyleSheet("""
+            QTextEdit {
+                font-size: 22px;
+                font-weight: 500;
+                padding: 10px;
+                background: rgba(8, 15, 28, 0.6);
+                color: #E8F8FF;
+                border: 2px solid rgba(0, 255, 255, 0.3);
+                border-radius: 10px;
+            }
+            QTextEdit:focus {
+                border: 2px solid rgba(0, 255, 255, 0.6);
+                background: rgba(8, 15, 28, 0.8);
+            }
+        """)
+        self.input_text.setPlaceholderText("Befehl eingeben...")
+        self.input_layout.addWidget(self.input_text)
+        
+        # Buttons Grid - Modern design
+        buttons_container = QFrame()
+        buttons_container.setStyleSheet("""
+            QFrame {
+                background: transparent;
+                border: none;
+                padding: 10px 0px;
+                margin: 5px 0px;
+            }
+        """)
+        self.button_layout = QHBoxLayout(buttons_container)
+        self.button_layout.setSpacing(8)
+        self.button_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Kompakte Button Styles
         button_style = """
             QPushButton {
-                font-size: 36px;
-                font-weight: bold;
-                padding: 15px 25px;
-                background-color: #2d2d2d;
+                font-size: 18px;
+                font-weight: 600;
+                padding: 10px 14px;
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(0, 255, 255, 0.18),
+                    stop:1 rgba(0, 200, 255, 0.12)
+                );
                 color: #00FFFF;
-                border: 2px solid #00FFFF;
-                border-radius: 8px;
-                min-height: 50px;
-                min-width: 140px;
+                border: 2px solid rgba(0, 255, 255, 0.45);
+                border-radius: 10px;
+                min-height: 38px;
+                min-width: 85px;
+                letter-spacing: 0px;
             }
             QPushButton:hover {
-                background-color: #3d3d3d;
-                border-color: #00FF00;
-                color: #00FF00;
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(0, 255, 255, 0.28),
+                    stop:1 rgba(0, 220, 255, 0.22)
+                );
+                border: 2px solid rgba(0, 255, 255, 0.7);
+                color: #66FFFF;
             }
             QPushButton:pressed {
-                background-color: #1d1d1d;
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(0, 255, 255, 0.12),
+                    stop:1 rgba(0, 180, 255, 0.08)
+                );
+                border: 2px solid rgba(0, 255, 255, 0.5);
+                padding-top: 11px;
+                padding-bottom: 9px;
             }
         """
         
-        self.execute_button = QPushButton("AUSFÜHREN")
+        self.execute_button = QPushButton("▶ AUSFÜHREN")
         self.execute_button.clicked.connect(self.send_command)
         self.execute_button.setStyleSheet(button_style)
         
-        self.voice_button = QPushButton("SPRACHSTEUERUNG")
+        self.voice_button = QPushButton("🗣️ SPRACHE")
         self.voice_button.clicked.connect(self.toggle_voice)
         self.voice_button.setStyleSheet(button_style)
         
-        self.speech_to_text_button = QPushButton("🎤 MIKROFON")
+        self.speech_to_text_button = QPushButton("🎤 MIKRO")
         self.speech_to_text_button.clicked.connect(self.toggle_speech_to_text)
         self.speech_to_text_button.setStyleSheet(button_style)
         self.speech_to_text_active = False
         
-        self.conversation_button = QPushButton("💬 GESPRÄCH")
+        self.conversation_button = QPushButton("💬 CHAT")
         self.conversation_button.clicked.connect(self.toggle_conversation)
         self.conversation_button.setStyleSheet(button_style)
         self.conversation_active = False
         
-        self.diagnostics_button = QPushButton("DIAGNOSE")
+        self.diagnostics_button = QPushButton("🔍 DIAGNOSE")
         self.diagnostics_button.clicked.connect(self.run_diagnostics)
         self.diagnostics_button.setStyleSheet(button_style)
         
-        button_layout.addWidget(self.execute_button)
-        button_layout.addWidget(self.voice_button)
-        button_layout.addWidget(self.speech_to_text_button)
-        button_layout.addWidget(self.conversation_button)
-        button_layout.addWidget(self.diagnostics_button)
-        input_layout.addLayout(button_layout)
+        # Voice clone toggle button
+        self.clone_toggle_button = QPushButton("🎭 KLON")
+        self.clone_toggle_button.clicked.connect(self.toggle_cloned_voice)
+        self.clone_toggle_button.setStyleSheet(button_style)
         
-        chat_layout.addWidget(input_frame)
+        # Mock TTS server button
+        self.mock_server_button = QPushButton("🎙️ SERVER")
+        self.mock_server_button.clicked.connect(self.start_mock_server)
+        self.mock_server_button.setStyleSheet(button_style)
+        self.mock_server_process = None
+        
+        self.button_layout.addWidget(self.execute_button)
+        self.button_layout.addWidget(self.voice_button)
+        self.button_layout.addWidget(self.speech_to_text_button)
+        self.button_layout.addWidget(self.conversation_button)
+        self.button_layout.addWidget(self.diagnostics_button)
+        self.button_layout.addWidget(self.clone_toggle_button)
+        self.button_layout.addWidget(self.mock_server_button)
+        self.input_layout.addWidget(buttons_container)
+        
+        self.chat_layout.addWidget(input_frame)
         layout.addWidget(chat_frame)
         
         # Nach dem Erstellen der Widgets:
         self.output_text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.input_text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        
+        # Initiale Skalierung
+        self.update_responsive_layout()
+
+    def _scale_factor(self) -> float:
+        base = 1280.0
+        return max(0.75, min(2.0, float(self.width()) / base))
+
+    def update_responsive_layout(self):
+        s = self._scale_factor()
+        width = self.width()
+        # Layout spacing/margins
+        self.main_layout.setContentsMargins(int(40*s), int(40*s), int(40*s), int(40*s))
+        self.main_layout.setSpacing(int(30*s))
+        if hasattr(self, 'status_layout'):
+            self.status_layout.setSpacing(int(60*s))
+            # Reflow Status-Karten
+            if width < 1100:
+                self.status_layout.setDirection(QBoxLayout.TopToBottom)
+            else:
+                self.status_layout.setDirection(QBoxLayout.LeftToRight)
+        if hasattr(self, 'chat_layout'):
+            self.chat_layout.setSpacing(int(30*s))
+        if hasattr(self, 'input_layout'):
+            self.input_layout.setSpacing(int(25*s))
+        if hasattr(self, 'button_layout'):
+            self.button_layout.setSpacing(int(20*s))
+            if width < 1100:
+                self.button_layout.setDirection(QBoxLayout.TopToBottom)
+            else:
+                self.button_layout.setDirection(QBoxLayout.LeftToRight)
+
+        # Header - Keep consistent modern styling
+        # (Already styled inline in create_header, just update font sizes for scaling)
+        
+        # Status Karten - Modern glass-morph (inline styles handle most of it)
+        # Dynamic color updates for voice status
+        voice_color = '#FF4444' if any(x in self.voice_status.text() for x in ['HÖRT', 'NIMMT']) else '#FFA500'
+        status_update = f"""
+            font-size: {int(36*s)}px;
+            font-weight: 600;
+            color: {voice_color};
+            background: transparent;
+            letter-spacing: 1px;
+        """
+        self.voice_status.setStyleSheet(status_update)
+        
+        # Buttons - Modern gradient style
+        btn_style = f"""
+            QPushButton {{
+                font-size: {int(32*s)}px;
+                font-weight: 600;
+                padding: {int(16*s)}px {int(22*s)}px;
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(0, 255, 255, 0.18),
+                    stop:1 rgba(0, 200, 255, 0.12)
+                );
+                color: #00FFFF;
+                border: 2px solid rgba(0, 255, 255, 0.45);
+                border-radius: {int(14*s)}px;
+                min-height: {int(55*s)}px;
+                min-width: {int(135*s)}px;
+                letter-spacing: 1px;
+            }}
+            QPushButton:hover {{
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(0, 255, 255, 0.28),
+                    stop:1 rgba(0, 220, 255, 0.22)
+                );
+                border: 2px solid rgba(0, 255, 255, 0.7);
+                color: #66FFFF;
+            }}
+            QPushButton:pressed {{
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(0, 255, 255, 0.12),
+                    stop:1 rgba(0, 180, 255, 0.08)
+                );
+                border: 2px solid rgba(0, 255, 255, 0.5);
+                padding-top: {int(18*s)}px;
+                padding-bottom: {int(14*s)}px;
+            }}
+        """
+        for btn in [self.execute_button, self.voice_button, self.speech_to_text_button, 
+                    self.conversation_button, self.diagnostics_button, self.clone_toggle_button, 
+                    self.mock_server_button]:
+            btn.setStyleSheet(btn_style)
+        
+        # Update clone status indicator (only if voice controller is already initialized)
+        if hasattr(self, 'voice'):
+            self.update_clone_status_indicator()
+
+    def run_ai_async(self, text: str):
+        def _work():
+            try:
+                resp = self.ai.process_command(text)
+            except Exception as e:
+                resp = f"Daddy, ich habe ein Problem bei der Verarbeitung festgestellt: {e}"
+            self.ai_response_ready.emit(resp)
+        threading.Thread(target=_work, daemon=True).start()
     
     def send_command(self):
         command = self.input_text.toPlainText().strip()
@@ -763,11 +1134,11 @@ QPushButton {
         # Verarbeite den Befehl automatisch
         if any(keyword in text.lower() for keyword in self.command_processor.commands.keys()):
             response = self.command_processor.process_command(text)
+            self.output_text.append(f"<span style='color: #00FF00; font-size: 40px;'>[JARVIS]</span> {response}")
+            self.voice.speak(response)
         else:
-            response = self.ai.process_command(text)
-            
-        self.output_text.append(f"<span style='color: #00FF00; font-size: 40px;'>[JARVIS]</span> {response}")
-        self.voice.speak(response)
+            self.output_text.append("<span style='color: #0096FF; font-size: 36px;'>[SYSTEM]</span> Denke nach…")
+            self.run_ai_async(text)
         
         # Auto-scroll
         scrollbar = self.output_text.verticalScrollBar()
@@ -811,11 +1182,11 @@ QPushButton {
         # Für getippte Befehle: Prüfe erst auf Sprachbefehle, dann AI
         if any(keyword in command.lower() for keyword in self.command_processor.commands.keys()):
             response = self.command_processor.process_command(command)
+            self.output_text.append(f"<span style='color: #00FF00; font-size: 40px;'>[JARVIS]</span> {response}")
+            self.voice.speak(response)
         else:
-            response = self.ai.process_command(command)
-            
-        self.output_text.append(f"<span style='color: #00FF00; font-size: 40px;'>[JARVIS]</span> {response}")
-        self.voice.speak(response)
+            self.output_text.append("<span style='color: #0096FF; font-size: 36px;'>[SYSTEM]</span> Denke nach…")
+            self.run_ai_async(command)
         
         # Windows integration
         self.windows_int.execute_command(command)
@@ -824,44 +1195,178 @@ QPushButton {
         scrollbar = self.output_text.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
     
+    def toggle_cloned_voice(self):
+        """Schaltet zwischen Standard- und Klon-Stimme um"""
+        if self.voice.tts_mode == 'cloned':
+            self.voice.disable_cloned_voice()
+            self.output_text.append("<span style='color: #FFA500; font-size: 40px;'>[STIMME]</span> Standard-TTS aktiviert")
+            self.voice.speak("Standard-Stimme aktiviert, Daddy.")
+        else:
+            if self.voice.enable_cloned_voice():
+                self.output_text.append("<span style='color: #00FF00; font-size: 40px;'>[STIMME]</span> Geklonte Stimme aktiviert")
+                self.voice.speak("Geklonte Stimme aktiviert, Daddy.")
+            else:
+                self.output_text.append("<span style='color: #FF0000; font-size: 40px;'>[FEHLER]</span> Klon-Server nicht erreichbar. Starten Sie den lokalen TTS-Server.")
+                self.voice.speak("Klon-Server nicht erreichbar, Daddy. Bitte starten Sie den lokalen T T S Server.")
+        
+        self.update_clone_status_indicator()
+        
+        # Auto-scroll
+        scrollbar = self.output_text.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
+    
+    def start_mock_server(self):
+        """Startet oder stoppt den Mock TTS Server"""
+        if self.mock_server_process is not None:
+            # Server ist bereits gestartet - stoppe ihn
+            try:
+                self.mock_server_process.terminate()
+                self.mock_server_process = None
+                self.mock_server_button.setText("🎙️ TEST SERVER")
+                self.output_text.append("<span style='color: #FFA500; font-size: 40px;'>[SERVER]</span> Mock TTS Server gestoppt")
+                self.voice.speak("Test-Server gestoppt, Daddy.")
+            except Exception as e:
+                self.output_text.append(f"<span style='color: #FF0000; font-size: 36px;'>[FEHLER]</span> Server-Stopp fehlgeschlagen: {e}")
+        else:
+            # Starte den Mock Server
+            try:
+                import subprocess
+                server_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tools', 'local_tts_server.py')
+                if not os.path.exists(server_script):
+                    self.output_text.append("<span style='color: #FF0000; font-size: 36px;'>[FEHLER]</span> Mock-Server-Skript nicht gefunden")
+                    return
+                
+                # Starte Server als Hintergrundprozess
+                self.mock_server_process = subprocess.Popen(
+                    [sys.executable, server_script],
+                    creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+                )
+                
+                self.mock_server_button.setText("🔴 SERVER AN")
+                self.mock_server_button.setStyleSheet("background-color: #44ff44; border-color: #66ff66; color: #000000;")
+                self.output_text.append("<span style='color: #00FF00; font-size: 40px;'>[SERVER]</span> Mock TTS Server gestartet auf Port 5005")
+                self.voice.speak("Test-Server gestartet, Daddy. Sie können nun die geklonte Stimme aktivieren.")
+                
+                # Warte kurz und versuche Auto-Aktivierung
+                QTimer.singleShot(2000, self.auto_activate_clone_after_server_start)
+                
+            except Exception as e:
+                self.output_text.append(f"<span style='color: #FF0000; font-size: 36px;'>[FEHLER]</span> Server-Start fehlgeschlagen: {e}")
+        
+        # Auto-scroll
+        scrollbar = self.output_text.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
+    
+    def auto_activate_clone_after_server_start(self):
+        """Versucht automatisch die geklonte Stimme nach Server-Start zu aktivieren"""
+        if self.voice.tts_mode != 'cloned':
+            if self.voice.enable_cloned_voice():
+                self.output_text.append("<span style='color: #00FF00; font-size: 40px;'>[AUTO]</span> Geklonte Stimme automatisch aktiviert")
+                self.update_clone_status_indicator()
+                scrollbar = self.output_text.verticalScrollBar()
+                scrollbar.setValue(scrollbar.maximum())
+    
+    def update_clone_status_indicator(self):
+        """Aktualisiert die Klon-Status-Anzeige"""
+        if self.voice.tts_mode == 'cloned':
+            self.clone_status_label.setText("🎭 GEKLONT")
+            self.clone_status_label.setStyleSheet("font-size: 24px; color: #00FF00; margin-top: 5px; font-weight: bold;")
+        else:
+            self.clone_status_label.setText("📢 STANDARD")
+            self.clone_status_label.setStyleSheet("font-size: 24px; color: #FFA500; margin-top: 5px;")
+    
     def run_diagnostics(self):
         self.output_text.append("<span style='color: #0096FF; font-size: 40px;'>[SYSTEM]</span> Führe vollständige Systemdiagnose durch...")
-        self.ai_status.setText("OPTIMAL")
-        self.ai_status.setStyleSheet("font-size: 34px; color: #00FF00;")
-        self.sys_status.setText("PERFEKT")
-        self.sys_status.setStyleSheet("font-size: 34px; color: #00FF00;")
-        self.output_text.append("<span style='color: #00FF00; font-size: 40px;'>[SYSTEM]</span> Alle Systeme optimal. Keine Probleme erkannt.")
+        
+        # AI Check
+        try:
+            models = self.ai.list_models()
+            if models:
+                self.ai_status.setText("OPTIMAL")
+                self.ai_status.setStyleSheet("font-size: 34px; color: #00FF00;")
+                self.output_text.append(f"<span style='color: #00FF00; font-size: 36px;'>✅ AI</span> Verbunden - {len(models)} Modelle verfügbar")
+            else:
+                self.ai_status.setText("WARNUNG")
+                self.ai_status.setStyleSheet("font-size: 34px; color: #FFA500;")
+                self.output_text.append("<span style='color: #FFA500; font-size: 36px;'>⚠️ AI</span> Verbunden aber keine Modelle gefunden")
+        except Exception as e:
+            self.ai_status.setText("FEHLER")
+            self.ai_status.setStyleSheet("font-size: 34px; color: #FF0000;")
+            self.output_text.append(f"<span style='color: #FF0000; font-size: 36px;'>❌ AI</span> Verbindung fehlgeschlagen: {e}")
+        
+        # Voice Check
+        try:
+            if self.voice.tts_mode == 'cloned':
+                if self.voice._probe_cloned_ready():
+                    self.output_text.append("<span style='color: #00FF00; font-size: 36px;'>✅ STIMME</span> Geklonte Stimme aktiv und Server erreichbar")
+                else:
+                    self.output_text.append("<span style='color: #FFA500; font-size: 36px;'>⚠️ STIMME</span> Geklonte Stimme aktiviert aber Server antwortet nicht")
+            else:
+                self.output_text.append("<span style='color: #00FF00; font-size: 36px;'>✅ STIMME</span> Standard-TTS aktiv")
+        except Exception as e:
+            self.output_text.append(f"<span style='color: #FF0000; font-size: 36px;'>❌ STIMME</span> Fehler: {e}")
+        
+        # System Status
+        try:
+            import psutil
+            cpu = psutil.cpu_percent(interval=0.5)
+            mem = psutil.virtual_memory().percent
+            self.sys_status.setText("PERFEKT")
+            self.sys_status.setStyleSheet("font-size: 34px; color: #00FF00;")
+            self.output_text.append(f"<span style='color: #00FF00; font-size: 36px;'>✅ SYSTEM</span> CPU: {cpu}% | RAM: {mem}%")
+        except Exception as e:
+            self.sys_status.setText("UNBEKANNT")
+            self.sys_status.setStyleSheet("font-size: 34px; color: #FFA500;")
+            self.output_text.append(f"<span style='color: #FFA500; font-size: 36px;'>⚠️ SYSTEM</span> Status unbekannt: {e}")
+        
+        self.output_text.append("<span style='color: #00FF00; font-size: 40px;'>[SYSTEM]</span> Diagnose abgeschlossen.")
+        
+        # Auto-scroll
+        scrollbar = self.output_text.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
+    
+    def periodic_clone_check(self):
+        """Prüft periodisch ob der Klon-Server verfügbar ist und aktiviert automatisch"""
+        # Nur prüfen wenn Standard-Mode aktiv ist und eine Stimmprobe existiert
+        if self.voice.tts_mode == 'standard' and self.voice.cloned_speaker_wav:
+            if self.voice._probe_cloned_ready():
+                # Server ist jetzt erreichbar - automatisch aktivieren
+                if self.voice.enable_cloned_voice():
+                    self.output_text.append("<span style='color: #00FF00; font-size: 36px;'>🎭 AUTO</span> Klon-Server erkannt - geklonte Stimme aktiviert")
+                    self.update_clone_status_indicator()
+                    scrollbar = self.output_text.verticalScrollBar()
+                    scrollbar.setValue(scrollbar.maximum())
     
     def update_status(self):
         # Einfache Status-Updates ohne komplexe Animationen
         pass
 
     def resizeEvent(self, event):
-        """Passe Schriftgrößen und Layout dynamisch an die Fenstergröße an"""
-        width = self.width()
-        # Dynamische Skalierung: Schriftgröße proportional zur Fensterbreite
-        # Für Full HD: Standard-Schriftgröße 18, skaliert ab 1600px
-        if width >= 1920:
-            font_size = 18
-        elif width >= 1600:
-            font_size = 16
-        elif width >= 1280:
-            font_size = 14
-        else:
-            font_size = 12
-        font = QFont("Segoe UI", font_size, QFont.Bold)
-        self.setFont(font)
-        # Passe auch die Größe der Textfelder und Buttons an
-        if hasattr(self, "output_text"):
-            self.output_text.setFont(font)
-        if hasattr(self, "input_text"):
-            self.input_text.setFont(font)
-        for btn in [getattr(self, n, None) for n in ["execute_button", "voice_button", "speech_to_text_button", "conversation_button", "diagnostics_button"]]:
-            if btn:
-                btn.setFont(font)
+        """Passe Layout/Styles responsiv an"""
+        self.update_responsive_layout()
         super().resizeEvent(event)
 
+    def on_ai_response(self, response: str):
+        self.output_text.append(f"<span style='color: #00FF00; font-size: 40px;'>[JARVIS]</span> {response}")
+        self.voice.speak(response)
+        scrollbar = self.output_text.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
+
 def main():
+    # High-DPI und Windows 11 AppUserModelID
+    try:
+        from PyQt5 import QtCore as _QtCore
+        _QtCore.QCoreApplication.setAttribute(_QtCore.Qt.AA_EnableHighDpiScaling, True)
+        _QtCore.QCoreApplication.setAttribute(_QtCore.Qt.AA_UseHighDpiPixmaps, True)
+    except Exception:
+        pass
+    try:
+        if sys.platform.startswith('win'):
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('Jarvis.App')
+    except Exception:
+        pass
+
     app = QApplication(sys.argv)
     screen = app.primaryScreen()
     screen_size = screen.size()
