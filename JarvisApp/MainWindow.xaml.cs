@@ -9,6 +9,7 @@ namespace JarvisApp
     {
         private readonly AIService _aiService;
         private readonly CommandService _commandService;
+        private readonly SpeechService _speechService;
 
         public MainWindow()
         {
@@ -24,6 +25,7 @@ namespace JarvisApp
             // Initialize Services
             _aiService = new AIService();
             _commandService = new CommandService();
+            _speechService = new SpeechService();
 
             // Check Ollama status on startup
             _ = CheckOllamaStatusAsync();
@@ -136,6 +138,38 @@ namespace JarvisApp
             InputTextBox.Text = string.Empty;
             StatusTextBlock.Text = "🔄 Bereit";
             InputTextBox.Focus(FocusState.Programmatic);
+        }
+
+        private async void VoiceButton_Click(object sender, RoutedEventArgs e)
+        {
+            VoiceButton.IsEnabled = false;
+            StatusTextBlock.Text = "🎤 Höre zu...";
+            
+            try
+            {
+                var recognizedText = await _speechService.ListenAsync();
+                
+                if (recognizedText.StartsWith("❌"))
+                {
+                    StatusTextBlock.Text = "❌ Spracherkennung fehlgeschlagen";
+                    ResponseTextBlock.Text = recognizedText;
+                }
+                else
+                {
+                    InputTextBox.Text = recognizedText;
+                    StatusTextBlock.Text = $"✅ Erkannt: {recognizedText}";
+                    InputTextBox.Focus(FocusState.Programmatic);
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusTextBlock.Text = "❌ Fehler";
+                ResponseTextBlock.Text = $"Fehler bei Spracheingabe: {ex.Message}";
+            }
+            finally
+            {
+                VoiceButton.IsEnabled = true;
+            }
         }
     }
 }

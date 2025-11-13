@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("JarvisApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+60ca829d798130528486febe2fbabdb5222c61d2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+887769b8ddffafc0461c1c8a5d65bbc13fa779ae")]
 [assembly: System.Reflection.AssemblyProductAttribute("JarvisApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JarvisApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
