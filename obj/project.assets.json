@@ -4994,19 +4994,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\julia\\.nuget\\packages\\": {}
+    "C:\\Users\\dadoc\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\julia\\OneDrive\\Dokumente\\GitHub\\Jarvis\\JarvisApp.csproj",
+      "projectUniqueName": "C:\\Users\\dadoc\\OneDrive\\Dokumente\\Schule\\Jarvis\\JarvisApp.csproj",
       "projectName": "JarvisApp",
-      "projectPath": "C:\\Users\\julia\\OneDrive\\Dokumente\\GitHub\\Jarvis\\JarvisApp.csproj",
-      "packagesPath": "C:\\Users\\julia\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\julia\\OneDrive\\Dokumente\\GitHub\\Jarvis\\obj\\",
+      "projectPath": "C:\\Users\\dadoc\\OneDrive\\Dokumente\\Schule\\Jarvis\\JarvisApp.csproj",
+      "packagesPath": "C:\\Users\\dadoc\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\dadoc\\OneDrive\\Dokumente\\Schule\\Jarvis\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\julia\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\dadoc\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -5014,6 +5019,7 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {

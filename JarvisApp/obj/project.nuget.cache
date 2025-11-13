@@ -1,18 +1,18 @@
 {
   "version": 2,
-  "dgSpecHash": "//Q6KqxBWFxCUJRhYs1qDKnLXQl2NuFVaDc18k6xPBLV55PYfG2MNqPzNdM6CMuE0uzHETaTvAbRjw28ubpvkQ==",
+  "dgSpecHash": "lsMajouVZjFCyA0nCaXbswm9UP7i1/vPGnQsqKTGAu+wK8nSwHP4OBHnxJHKuO7AopuYU218ha1xsWvxFKXUog==",
   "success": true,
-  "projectFilePath": "C:\\Users\\julia\\OneDrive\\Dokumente\\GitHub\\Jarvis\\JarvisApp\\JarvisApp.csproj",
+  "projectFilePath": "C:\\Users\\dadoc\\OneDrive\\Dokumente\\Schule\\Jarvis\\JarvisApp\\JarvisApp.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\julia\\.nuget\\packages\\microsoft.windows.sdk.buildtools\\10.0.22621.3233\\microsoft.windows.sdk.buildtools.10.0.22621.3233.nupkg.sha512",
-    "C:\\Users\\julia\\.nuget\\packages\\microsoft.windowsappsdk\\1.5.240802000\\microsoft.windowsappsdk.1.5.240802000.nupkg.sha512",
-    "C:\\Users\\julia\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\8.0.3\\microsoft.netcore.app.runtime.win-x64.8.0.3.nupkg.sha512",
-    "C:\\Users\\julia\\.nuget\\packages\\microsoft.netcore.app.runtime.win-arm64\\8.0.3\\microsoft.netcore.app.runtime.win-arm64.8.0.3.nupkg.sha512",
-    "C:\\Users\\julia\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\8.0.3\\microsoft.windowsdesktop.app.runtime.win-x64.8.0.3.nupkg.sha512",
-    "C:\\Users\\julia\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-arm64\\8.0.3\\microsoft.windowsdesktop.app.runtime.win-arm64.8.0.3.nupkg.sha512",
-    "C:\\Users\\julia\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\8.0.3\\microsoft.aspnetcore.app.runtime.win-x64.8.0.3.nupkg.sha512",
-    "C:\\Users\\julia\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-arm64\\8.0.3\\microsoft.aspnetcore.app.runtime.win-arm64.8.0.3.nupkg.sha512",
-    "C:\\Users\\julia\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.31\\microsoft.windows.sdk.net.ref.10.0.19041.31.nupkg.sha512"
+    "C:\\Users\\dadoc\\.nuget\\packages\\microsoft.windows.sdk.buildtools\\10.0.22621.3233\\microsoft.windows.sdk.buildtools.10.0.22621.3233.nupkg.sha512",
+    "C:\\Users\\dadoc\\.nuget\\packages\\microsoft.windowsappsdk\\1.5.240802000\\microsoft.windowsappsdk.1.5.240802000.nupkg.sha512",
+    "C:\\Users\\dadoc\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\8.0.3\\microsoft.netcore.app.runtime.win-x64.8.0.3.nupkg.sha512",
+    "C:\\Users\\dadoc\\.nuget\\packages\\microsoft.netcore.app.runtime.win-arm64\\8.0.3\\microsoft.netcore.app.runtime.win-arm64.8.0.3.nupkg.sha512",
+    "C:\\Users\\dadoc\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\8.0.3\\microsoft.windowsdesktop.app.runtime.win-x64.8.0.3.nupkg.sha512",
+    "C:\\Users\\dadoc\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-arm64\\8.0.3\\microsoft.windowsdesktop.app.runtime.win-arm64.8.0.3.nupkg.sha512",
+    "C:\\Users\\dadoc\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\8.0.3\\microsoft.aspnetcore.app.runtime.win-x64.8.0.3.nupkg.sha512",
+    "C:\\Users\\dadoc\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-arm64\\8.0.3\\microsoft.aspnetcore.app.runtime.win-arm64.8.0.3.nupkg.sha512",
+    "C:\\Users\\dadoc\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.31\\microsoft.windows.sdk.net.ref.10.0.19041.31.nupkg.sha512"
   ],
   "logs": []
 }
