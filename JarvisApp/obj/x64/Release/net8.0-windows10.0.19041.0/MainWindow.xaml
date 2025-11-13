@@ -21,7 +21,8 @@
 
         <!-- Main Content -->
         <Grid Grid.Row="1" Padding="24">
-            <StackPanel Spacing="20" MaxWidth="800" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="20" MaxWidth="800" HorizontalAlignment="Center" Margin="0,40,0,40">
                 
                 <!-- Welcome Card -->
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -65,7 +66,12 @@
                                                            
                                    Width="100"/>
                             
-                            <Button x:ConnectionId='7' x:Name="ClearButton"
+                            <Button x:ConnectionId='7' x:Name="VoiceButton"
+                                   Content="🎤 Sprache"
+                                                            
+                                   Width="100"/>
+                            
+                            <Button x:ConnectionId='8' x:Name="ClearButton"
                                    Content="Löschen"
                                                             
                                    Width="100"/>
@@ -79,9 +85,10 @@
                        BorderThickness="1"
                        CornerRadius="8"
                        Padding="24"
-                       MinHeight="250">
+                       Height="400">
                     <ScrollViewer x:ConnectionId='3' x:Name="ResponseScrollViewer"
-                                 VerticalScrollBarVisibility="Auto">
+                                 VerticalScrollBarVisibility="Auto"
+                                 HorizontalScrollBarVisibility="Disabled">
                         <TextBlock x:ConnectionId='4' x:Name="ResponseTextBlock"
                                   Text="Bereit für deine Fragen..."
                                   Style="{StaticResource BodyTextBlockStyle}"
@@ -113,6 +120,7 @@
                               VerticalAlignment="Center"/>
                 </Grid>
             </StackPanel>
+            </ScrollViewer>
         </Grid>
     </Grid>
 </Window>
