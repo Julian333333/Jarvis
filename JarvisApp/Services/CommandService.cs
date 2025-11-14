@@ -7,6 +7,13 @@ namespace JarvisApp.Services
 {
     public class CommandService
     {
+        private readonly AutomationService _automation;
+
+        public CommandService()
+        {
+            _automation = new AutomationService();
+        }
+
         // Windows API für Lautstärke
         [DllImport("user32.dll")]
         private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
@@ -129,6 +136,185 @@ namespace JarvisApp.Services
                 };
             }
 
+            // Text schreiben
+            if (lowerInput.Contains("schreibe") || lowerInput.Contains("tippe") || lowerInput.Contains("gib ein"))
+            {
+                var textToType = ExtractTextAfterKeyword(input, new[] { "schreibe", "tippe", "gib ein" });
+                if (!string.IsNullOrEmpty(textToType))
+                {
+                    await _automation.TypeTextAsync(textToType, 30);
+                    return new CommandResult { Success = true, Message = $"⌨️ Text eingegeben: {textToType}" };
+                }
+            }
+
+            // Tastenkombinationen
+            if (lowerInput.Contains("drücke") || lowerInput.Contains("drucke") || lowerInput.Contains("taste"))
+            {
+                if (lowerInput.Contains("enter"))
+                {
+                    _automation.PressKey(VirtualKeyCode.RETURN);
+                    return new CommandResult { Success = true, Message = "⌨️ Enter gedrückt" };
+                }
+                if (lowerInput.Contains("strg c") || lowerInput.Contains("ctrl c") || lowerInput.Contains("kopieren"))
+                {
+                    _automation.PressKeyCombination(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_C);
+                    return new CommandResult { Success = true, Message = "⌨️ Strg+C (Kopieren)" };
+                }
+                if (lowerInput.Contains("strg v") || lowerInput.Contains("ctrl v") || lowerInput.Contains("einfügen"))
+                {
+                    _automation.PressKeyCombination(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
+                    return new CommandResult { Success = true, Message = "⌨️ Strg+V (Einfügen)" };
+                }
+                if (lowerInput.Contains("strg x") || lowerInput.Contains("ctrl x") || lowerInput.Contains("ausschneiden"))
+                {
+                    _automation.PressKeyCombination(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_X);
+                    return new CommandResult { Success = true, Message = "⌨️ Strg+X (Ausschneiden)" };
+                }
+                if (lowerInput.Contains("strg z") || lowerInput.Contains("ctrl z") || lowerInput.Contains("rückgängig"))
+                {
+                    _automation.PressKeyCombination(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_Z);
+                    return new CommandResult { Success = true, Message = "⌨️ Strg+Z (Rückgängig)" };
+                }
+                if (lowerInput.Contains("alt f4") || lowerInput.Contains("fenster schließen"))
+                {
+                    _automation.PressKeyCombination(VirtualKeyCode.ALT, VirtualKeyCode.F4);
+                    return new CommandResult { Success = true, Message = "⌨️ Alt+F4 (Fenster schließen)" };
+                }
+                if (lowerInput.Contains("alt tab"))
+                {
+                    _automation.PressKeyCombination(VirtualKeyCode.ALT, VirtualKeyCode.TAB);
+                    return new CommandResult { Success = true, Message = "⌨️ Alt+Tab (Fenster wechseln)" };
+                }
+                if (lowerInput.Contains("windows") || lowerInput.Contains("win"))
+                {
+                    _automation.PressKey(VirtualKeyCode.LWIN);
+                    return new CommandResult { Success = true, Message = "⌨️ Windows-Taste gedrückt" };
+                }
+            }
+
+            // Maus-Steuerung
+            if (lowerInput.Contains("klick") || lowerInput.Contains("click"))
+            {
+                if (lowerInput.Contains("links"))
+                {
+                    _automation.LeftClick();
+                    return new CommandResult { Success = true, Message = "🖱️ Linksklick ausgeführt" };
+                }
+                if (lowerInput.Contains("rechts"))
+                {
+                    _automation.RightClick();
+                    return new CommandResult { Success = true, Message = "🖱️ Rechtsklick ausgeführt" };
+                }
+                if (lowerInput.Contains("doppel"))
+                {
+                    _automation.DoubleClick();
+                    return new CommandResult { Success = true, Message = "🖱️ Doppelklick ausgeführt" };
+                }
+                // Normaler Klick
+                _automation.LeftClick();
+                return new CommandResult { Success = true, Message = "🖱️ Klick ausgeführt" };
+            }
+
+            if (lowerInput.Contains("bewege maus") || lowerInput.Contains("maus position"))
+            {
+                // Versuche Koordinaten zu extrahieren
+                var numbers = System.Text.RegularExpressions.Regex.Matches(input, @"\d+")
+                    .Select(m => int.Parse(m.Value)).ToArray();
+                
+                if (numbers.Length >= 2)
+                {
+                    _automation.MoveMouse(numbers[0], numbers[1]);
+                    return new CommandResult { Success = true, Message = $"🖱️ Maus zu Position ({numbers[0]}, {numbers[1]})" };
+                }
+                else
+                {
+                    var pos = _automation.GetMousePosition();
+                    return new CommandResult { Success = true, Message = $"🖱️ Aktuelle Position: ({pos.X}, {pos.Y})" };
+                }
+            }
+
+            // Fenster-Management
+            if (lowerInput.Contains("fenster") || lowerInput.Contains("window"))
+            {
+                if (lowerInput.Contains("liste") || lowerInput.Contains("zeige"))
+                {
+                    var windows = _automation.GetOpenWindows();
+                    if (windows.Count > 0)
+                    {
+                        var list = string.Join("\n", windows.Take(10).Select((w, i) => $"{i + 1}. {w}"));
+                        return new CommandResult { Success = true, Message = $"📋 Offene Fenster:\n{list}" };
+                    }
+                    return new CommandResult { Success = true, Message = "📋 Keine Fenster gefunden" };
+                }
+                if (lowerInput.Contains("fokus") || lowerInput.Contains("wechsel"))
+                {
+                    var windowName = ExtractTextAfterKeyword(input, new[] { "fokus", "wechsel zu", "wechsel" });
+                    if (!string.IsNullOrEmpty(windowName))
+                    {
+                        if (_automation.FocusWindow(windowName))
+                        {
+                            return new CommandResult { Success = true, Message = $"🪟 Fenster '{windowName}' aktiviert" };
+                        }
+                        return new CommandResult { Success = false, Message = $"❌ Fenster '{windowName}' nicht gefunden" };
+                    }
+                }
+                if (lowerInput.Contains("maximier"))
+                {
+                    var windowName = ExtractTextAfterKeyword(input, new[] { "maximiere", "maximier" });
+                    if (!string.IsNullOrEmpty(windowName) && _automation.MaximizeWindow(windowName))
+                    {
+                        return new CommandResult { Success = true, Message = $"🪟 Fenster '{windowName}' maximiert" };
+                    }
+                }
+                if (lowerInput.Contains("minimi"))
+                {
+                    var windowName = ExtractTextAfterKeyword(input, new[] { "minimiere", "minimi" });
+                    if (!string.IsNullOrEmpty(windowName) && _automation.MinimizeWindow(windowName))
+                    {
+                        return new CommandResult { Success = true, Message = $"🪟 Fenster '{windowName}' minimiert" };
+                    }
+                }
+                if (lowerInput.Contains("schließ") || lowerInput.Contains("schliess"))
+                {
+                    var windowName = ExtractTextAfterKeyword(input, new[] { "schließe", "schliesse" });
+                    if (!string.IsNullOrEmpty(windowName) && _automation.CloseWindow(windowName))
+                    {
+                        return new CommandResult { Success = true, Message = $"🪟 Fenster '{windowName}' geschlossen" };
+                    }
+                }
+                if (lowerInput.Contains("aktuell"))
+                {
+                    var title = _automation.GetActiveWindowTitle();
+                    return new CommandResult { Success = true, Message = $"🪟 Aktives Fenster: {title}" };
+                }
+            }
+
+            // Prozess-Management
+            if (lowerInput.Contains("prozess") || lowerInput.Contains("process"))
+            {
+                if (lowerInput.Contains("liste"))
+                {
+                    var processes = _automation.GetRunningProcesses();
+                    var list = string.Join("\n", processes.Take(10).Select((p, i) => $"{i + 1}. {p}"));
+                    return new CommandResult { Success = true, Message = $"💻 Laufende Prozesse:\n{list}" };
+                }
+                if (lowerInput.Contains("beende") || lowerInput.Contains("kill"))
+                {
+                    var processName = ExtractTextAfterKeyword(input, new[] { "beende", "kill" });
+                    if (!string.IsNullOrEmpty(processName) && _automation.KillProcess(processName))
+                    {
+                        return new CommandResult { Success = true, Message = $"💻 Prozess '{processName}' beendet" };
+                    }
+                }
+            }
+
+            // Bildschirm-Info
+            if (lowerInput.Contains("bildschirm") || lowerInput.Contains("auflösung") || lowerInput.Contains("screen"))
+            {
+                var res = _automation.GetScreenResolution();
+                return new CommandResult { Success = true, Message = $"🖥️ Bildschirmauflösung: {res.Width} x {res.Height}" };
+            }
+
             // Zeit und Datum
             if (lowerInput.Contains("wie spät") || lowerInput.Contains("uhrzeit") || lowerInput.Contains("zeit"))
             {
@@ -201,6 +387,24 @@ namespace JarvisApp.Services
             {
                 Debug.WriteLine($"Fehler beim Öffnen von {url}: {ex.Message}");
             }
+        }
+
+        private string ExtractTextAfterKeyword(string input, string[] keywords)
+        {
+            var lowerInput = input.ToLower();
+            foreach (var keyword in keywords)
+            {
+                var index = lowerInput.IndexOf(keyword.ToLower());
+                if (index >= 0)
+                {
+                    var startIndex = index + keyword.Length;
+                    if (startIndex < input.Length)
+                    {
+                        return input.Substring(startIndex).Trim();
+                    }
+                }
+            }
+            return string.Empty;
         }
     }
 

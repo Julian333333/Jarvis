@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using System.Threading.Tasks;
 using JarvisApp.Services;
 
 namespace JarvisApp
@@ -9,6 +10,8 @@ namespace JarvisApp
     {
         private readonly AIService _aiService;
         private readonly CommandService _commandService;
+        private readonly AutomationService _automationService;
+        private readonly IntelligentCommandService _intelligentCommandService;
 
         public MainWindow()
         {
@@ -23,7 +26,9 @@ namespace JarvisApp
 
             // Initialize Services
             _aiService = new AIService();
+            _automationService = new AutomationService();
             _commandService = new CommandService();
+            _intelligentCommandService = new IntelligentCommandService(_aiService, _commandService, _automationService);
 
             // Check Ollama status on startup
             _ = CheckOllamaStatusAsync();
@@ -68,27 +73,36 @@ namespace JarvisApp
             // Disable controls during processing
             InputTextBox.IsEnabled = false;
             SendButton.IsEnabled = false;
-            StatusTextBlock.Text = "⏳ Verarbeite...";
+            StatusTextBlock.Text = "🤖 AI analysiert Anfrage...";
             ResponseTextBlock.Text = "";
 
             try
             {
-                // Zuerst prüfen, ob es ein System-Command ist
-                var commandResult = await _commandService.ProcessCommandAsync(input);
+                // 1. AI analysiert die Anfrage und führt Aktionen aus
+                var intelligentResult = await _intelligentCommandService.ProcessIntelligentCommandAsync(input);
                 
-                if (commandResult.Success)
+                if (intelligentResult.Success && !intelligentResult.IsAIResponse)
                 {
-                    // Command wurde ausgeführt
-                    ResponseTextBlock.Text = commandResult.Message;
-                    StatusTextBlock.Text = commandResult.IsWarning ? "⚠️ Warnung" : "✅ Command ausgeführt";
+                    // Aktionen wurden ausgeführt
+                    ResponseTextBlock.Text = intelligentResult.Message;
+                    StatusTextBlock.Text = "✅ Aktionen ausgeführt";
                     InputTextBox.Text = string.Empty;
                 }
-                else
+                else if (intelligentResult.IsAIResponse)
                 {
-                    // Kein Command erkannt -> An AI weiterleiten
-                    StatusTextBlock.Text = "⏳ Generiere Antwort...";
+                    // Zeige ausgeführte Aktionen an (falls vorhanden)
+                    if (intelligentResult.Actions.Count > 0)
+                    {
+                        ResponseTextBlock.Text = string.Join("\n", intelligentResult.Actions) + "\n\n";
+                        StatusTextBlock.Text = "⏳ Generiere AI-Antwort...";
+                        await Task.Delay(500);
+                    }
+                    else
+                    {
+                        StatusTextBlock.Text = "⏳ Generiere Antwort...";
+                    }
                     
-                    // Use streaming for real-time response
+                    // Hole AI-Antwort mit Streaming
                     await _aiService.GenerateStreamingResponseAsync(
                         input,
                         onChunkReceived: chunk =>
@@ -103,6 +117,35 @@ namespace JarvisApp
 
                     StatusTextBlock.Text = "✅ Antwort generiert";
                     InputTextBox.Text = string.Empty;
+                }
+                else
+                {
+                    // Fallback: Versuche alten CommandService
+                    var commandResult = await _commandService.ProcessCommandAsync(input);
+                    
+                    if (commandResult.Success)
+                    {
+                        ResponseTextBlock.Text = commandResult.Message;
+                        StatusTextBlock.Text = "✅ Command ausgeführt";
+                        InputTextBox.Text = string.Empty;
+                    }
+                    else
+                    {
+                        // Letzte Option: Normale AI-Antwort
+                        StatusTextBlock.Text = "⏳ Generiere Antwort...";
+                        await _aiService.GenerateStreamingResponseAsync(
+                            input,
+                            onChunkReceived: chunk =>
+                            {
+                                DispatcherQueue.TryEnqueue(() =>
+                                {
+                                    ResponseTextBlock.Text += chunk;
+                                });
+                            }
+                        );
+                        StatusTextBlock.Text = "✅ Antwort generiert";
+                        InputTextBox.Text = string.Empty;
+                    }
                 }
             }
             catch (Exception ex)

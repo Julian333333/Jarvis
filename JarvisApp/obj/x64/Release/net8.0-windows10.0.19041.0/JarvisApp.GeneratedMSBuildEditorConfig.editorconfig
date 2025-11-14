@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = JarvisApp
-build_property.ProjectDir = C:\Users\dadoc\OneDrive\Dokumente\Schule\Jarvis\JarvisApp\
+build_property.ProjectDir = C:\Users\julia\OneDrive\Dokumente\GitHub\Jarvis\JarvisApp\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
