@@ -11,7 +11,9 @@ namespace JarvisApp
         private readonly AIService _aiService;
         private readonly CommandService _commandService;
         private readonly AutomationService _automationService;
+        private readonly BrowserAutomationService _browserAutomationService;
         private readonly IntelligentCommandService _intelligentCommandService;
+        private readonly WorkModeService _workModeService;
 
         public MainWindow()
         {
@@ -27,8 +29,10 @@ namespace JarvisApp
             // Initialize Services
             _aiService = new AIService();
             _automationService = new AutomationService();
+            _browserAutomationService = new BrowserAutomationService(_automationService);
             _commandService = new CommandService();
-            _intelligentCommandService = new IntelligentCommandService(_aiService, _commandService, _automationService);
+            _intelligentCommandService = new IntelligentCommandService(_aiService, _commandService, _automationService, _browserAutomationService);
+            _workModeService = new WorkModeService(_automationService);
 
             // Check Ollama status on startup
             _ = CheckOllamaStatusAsync();
@@ -70,6 +74,29 @@ namespace JarvisApp
                 return;
             }
 
+            // Prüfe auf Bestätigung/Abbruch bei ausstehender Aktion
+            if (_intelligentCommandService.IsWaitingForConfirmation)
+            {
+                var lowerInput = input.ToLower();
+                
+                if (lowerInput.Contains("ja") || lowerInput.Contains("bestätig") || lowerInput.Contains("ok") || lowerInput.Contains("yes"))
+                {
+                    var confirmResult = _intelligentCommandService.ConfirmAction();
+                    ResponseTextBlock.Text += "\n\n" + confirmResult;
+                    StatusTextBlock.Text = "✅ Aktion bestätigt";
+                    InputTextBox.Text = string.Empty;
+                    return;
+                }
+                else if (lowerInput.Contains("nein") || lowerInput.Contains("abbruch") || lowerInput.Contains("cancel") || lowerInput.Contains("no"))
+                {
+                    var cancelResult = _intelligentCommandService.CancelAction();
+                    ResponseTextBlock.Text += "\n\n" + cancelResult;
+                    StatusTextBlock.Text = "🚫 Aktion abgebrochen";
+                    InputTextBox.Text = string.Empty;
+                    return;
+                }
+            }
+
             // Disable controls during processing
             InputTextBox.IsEnabled = false;
             SendButton.IsEnabled = false;
@@ -78,75 +105,24 @@ namespace JarvisApp
 
             try
             {
-                // 1. AI analysiert die Anfrage und führt Aktionen aus
-                var intelligentResult = await _intelligentCommandService.ProcessIntelligentCommandAsync(input);
-                
-                if (intelligentResult.Success && !intelligentResult.IsAIResponse)
+                // Spezial-Modus: Work Mode
+                if (input.ToLower().Contains("work mode") || input.ToLower().Contains("arbeitsmodus"))
                 {
-                    // Aktionen wurden ausgeführt
-                    ResponseTextBlock.Text = intelligentResult.Message;
-                    StatusTextBlock.Text = "✅ Aktionen ausgeführt";
+                    StatusTextBlock.Text = "🎵 Starte Work Mode...";
+                    var workModeResult = await _workModeService.ExecuteWorkModeAsync();
+                    ResponseTextBlock.Text = workModeResult;
+                    StatusTextBlock.Text = "✅ Work Mode aktiviert";
                     InputTextBox.Text = string.Empty;
+                    return;
                 }
-                else if (intelligentResult.IsAIResponse)
-                {
-                    // Zeige ausgeführte Aktionen an (falls vorhanden)
-                    if (intelligentResult.Actions.Count > 0)
-                    {
-                        ResponseTextBlock.Text = string.Join("\n", intelligentResult.Actions) + "\n\n";
-                        StatusTextBlock.Text = "⏳ Generiere AI-Antwort...";
-                        await Task.Delay(500);
-                    }
-                    else
-                    {
-                        StatusTextBlock.Text = "⏳ Generiere Antwort...";
-                    }
-                    
-                    // Hole AI-Antwort mit Streaming
-                    await _aiService.GenerateStreamingResponseAsync(
-                        input,
-                        onChunkReceived: chunk =>
-                        {
-                            // Update UI on main thread
-                            DispatcherQueue.TryEnqueue(() =>
-                            {
-                                ResponseTextBlock.Text += chunk;
-                            });
-                        }
-                    );
 
-                    StatusTextBlock.Text = "✅ Antwort generiert";
-                    InputTextBox.Text = string.Empty;
-                }
-                else
-                {
-                    // Fallback: Versuche alten CommandService
-                    var commandResult = await _commandService.ProcessCommandAsync(input);
-                    
-                    if (commandResult.Success)
-                    {
-                        ResponseTextBlock.Text = commandResult.Message;
-                        StatusTextBlock.Text = "✅ Command ausgeführt";
-                        InputTextBox.Text = string.Empty;
-                    }
-                    else
-                    {
-                        // Letzte Option: Normale AI-Antwort
-                        StatusTextBlock.Text = "⏳ Generiere Antwort...";
-                        await _aiService.GenerateStreamingResponseAsync(
-                            input,
-                            onChunkReceived: chunk =>
-                            {
-                                DispatcherQueue.TryEnqueue(() =>
-                                {
-                                    ResponseTextBlock.Text += chunk;
-                                });
-                            }
-                        );
-                        StatusTextBlock.Text = "✅ Antwort generiert";
-                        InputTextBox.Text = string.Empty;
-                    }
-                }
+                // 1. AI analysiert die Anfrage und führt Aktionen aus
+                var intelligentResult = await _intelligentCommandService.ProcessCommandAsync(input);
+                
+                // Zeige Ergebnis an
+                ResponseTextBlock.Text = intelligentResult;
+                StatusTextBlock.Text = "✅ Fertig";
+                InputTextBox.Text = string.Empty;
             }
             catch (Exception ex)
             {

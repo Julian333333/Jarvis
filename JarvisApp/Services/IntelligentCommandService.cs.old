@@ -15,38 +15,12 @@ namespace JarvisApp.Services
         private readonly AIService _aiService;
         private readonly AutomationService _automation;
         private readonly CommandService _commandService;
-        private readonly BrowserAutomationService _browserAutomation;
 
-        public IntelligentCommandService(AIService aiService, CommandService commandService, AutomationService automation, BrowserAutomationService browserAutomation)
+        public IntelligentCommandService(AIService aiService, CommandService commandService, AutomationService automation)
         {
             _aiService = aiService;
             _commandService = commandService;
             _automation = automation;
-            _browserAutomation = browserAutomation;
-        }
-
-        /// <summary>
-        /// Prüft ob auf Bestätigung gewartet wird
-        /// </summary>
-        public bool IsWaitingForConfirmation => _browserAutomation.IsWaitingForConfirmation;
-
-        /// <summary>
-        /// Bestätigt die ausstehende Aktion
-        /// </summary>
-        public string ConfirmAction() => _browserAutomation.ConfirmPendingAction();
-
-        /// <summary>
-        /// Bricht die ausstehende Aktion ab
-        /// </summary>
-        public string CancelAction() => _browserAutomation.CancelPendingAction();
-
-        /// <summary>
-        /// Verarbeitet Command (neue vereinfachte Methode)
-        /// </summary>
-        public async Task<string> ProcessCommandAsync(string userInput)
-        {
-            var result = await ProcessIntelligentCommandAsync(userInput);
-            return result.Message;
         }
 
         /// <summary>

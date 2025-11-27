@@ -590,3 +590,6 @@ C:\Users\dadoc\OneDrive\Dokumente\Schule\Jarvis\JarvisApp\obj\x64\Release\net8.0
 C:\Users\dadoc\OneDrive\Dokumente\Schule\Jarvis\JarvisApp\obj\x64\Release\net8.0-windows10.0.19041.0\qualifiers.txt
 C:\Users\dadoc\OneDrive\Dokumente\Schule\Jarvis\JarvisApp\obj\x64\Release\net8.0-windows10.0.19041.0\qualifiers.txt.intermediate
 C:\Users\dadoc\OneDrive\Dokumente\Schule\Jarvis\JarvisApp\obj\x64\Release\net8.0-windows10.0.19041.0\MultipleQualifiersPerDimensionFound.txt
+C:\Users\julia\OneDrive\Dokumente\GitHub\Jarvis\JarvisApp\bin\x64\Release\net8.0-windows10.0.19041.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\julia\OneDrive\Dokumente\GitHub\Jarvis\JarvisApp\bin\x64\Release\net8.0-windows10.0.19041.0\System.Drawing.Common.dll
+C:\Users\julia\OneDrive\Dokumente\GitHub\Jarvis\JarvisApp\bin\x64\Release\net8.0-windows10.0.19041.0\runtimes\win\lib\net8.0\Microsoft.Win32.SystemEvents.dll
