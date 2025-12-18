@@ -11,6 +11,7 @@
           "Microsoft.Windows.SDK.BuildTools": "10.0.22621.3233",
           "Microsoft.WindowsAppSDK": "1.5.240802000",
           "System.Drawing.Common": "8.0.0",
+          "System.Speech": "10.0.0",
           "runtimepack.Microsoft.Windows.SDK.NET.Ref": "10.0.19041.31"
         },
         "runtime": {
@@ -155,6 +156,22 @@
             "fileVersion": "8.0.23.53105"
           }
         }
+      },
+      "System.Speech/10.0.0": {
+        "runtime": {
+          "lib/net8.0/System.Speech.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.52411"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/net8.0/System.Speech.dll": {
+            "rid": "win",
+            "assetType": "runtime",
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.52411"
+          }
+        }
       }
     }
   },
@@ -196,6 +213,13 @@
       "sha512": "sha512-JkbHJjtI/dWc5dfmEdJlbe3VwgZqCkZRtfuWFh5GOv0f+gGCfBtzMpIVkmdkj2AObO9y+oiOi81UGwH3aBYuqA==",
       "path": "system.drawing.common/8.0.0",
       "hashPath": "system.drawing.common.8.0.0.nupkg.sha512"
+    },
+    "System.Speech/10.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-nHlCdjoeReiSx4kzgPEwPRlbOAyuVFwndXTZZT+CLnHb8UIfB+YMgpQjQ7faYvs3xU8wyvpb6dt+U+HwdlbG7w==",
+      "path": "system.speech/10.0.0",
+      "hashPath": "system.speech.10.0.0.nupkg.sha512"
     }
   }
 }

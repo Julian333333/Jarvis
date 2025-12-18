@@ -468,6 +468,7 @@ namespace JarvisApp.Services
         // Common Letters for shortcuts
         VK_A = 0x41,
         VK_C = 0x43,
+        VK_F = 0x46,
         VK_V = 0x56,
         VK_X = 0x58,
         VK_Z = 0x5A,

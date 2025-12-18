@@ -47,7 +47,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         
-                        <TextBox x:ConnectionId='5' x:Name="InputTextBox"
+                        <TextBox x:ConnectionId='15' x:Name="InputTextBox"
                                 Grid.Column="0"
                                 PlaceholderText="Stelle JARVIS eine Frage..."
                                 Height="100"
@@ -59,13 +59,13 @@
                                    Orientation="Vertical" 
                                    Spacing="8" 
                                    Margin="12,0,0,0">
-                            <Button x:ConnectionId='6' x:Name="SendButton"
+                            <Button x:ConnectionId='16' x:Name="SendButton"
                                    Content="Senden" 
                                    Style="{StaticResource AccentButtonStyle}"
                                                            
                                    Width="100"/>
                             
-                            <Button x:ConnectionId='7' x:Name="ClearButton"
+                            <Button x:ConnectionId='17' x:Name="ClearButton"
                                    Content="Löschen"
                                                             
                                    Width="100"/>
@@ -80,15 +80,90 @@
                        CornerRadius="8"
                        Padding="24"
                        MinHeight="250">
-                    <ScrollViewer x:ConnectionId='3' x:Name="ResponseScrollViewer"
+                    <ScrollViewer x:ConnectionId='13' x:Name="ResponseScrollViewer"
                                  VerticalScrollBarVisibility="Auto">
-                        <TextBlock x:ConnectionId='4' x:Name="ResponseTextBlock"
+                        <TextBlock x:ConnectionId='14' x:Name="ResponseTextBlock"
                                   Text="Bereit für deine Fragen..."
                                   Style="{StaticResource BodyTextBlockStyle}"
                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                   TextWrapping="Wrap"
                                   IsTextSelectionEnabled="True"/>
                     </ScrollViewer>
+                </Border>
+
+                <!-- Voice Control -->
+                <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
+                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                       BorderThickness="1"
+                       CornerRadius="8"
+                       Padding="16">
+                    <StackPanel Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+                        <ToggleSwitch x:ConnectionId='11' x:Name="VoiceToggle"
+                                      Header="Sprachsteuerung"
+                                      OffContent="Deaktiviert"
+                                      OnContent="Aktiv"
+                                                                   />
+                        <StackPanel>
+                            <TextBlock Text="Hotword: 'Jarvis'" Style="{StaticResource BodyTextBlockStyle}"/>
+                            <TextBlock x:ConnectionId='12' x:Name="VoiceStatusTextBlock"
+                                       Text="🎙️ Sprache deaktiviert"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Autonomy Control -->
+                <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
+                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                       BorderThickness="1"
+                       CornerRadius="8"
+                       Padding="16">
+                    <StackPanel Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <TextBlock Text="Autonomer Modus" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                            <ComboBox x:ConnectionId='9' x:Name="AutonomyModeCombo"
+                                      Width="150"
+                                                                                           >
+                                <ComboBoxItem Content="Aus" Tag="Off" IsSelected="True"/>
+                                <ComboBoxItem Content="Pausiert" Tag="Paused"/>
+                                <ComboBoxItem Content="Vollständig" Tag="Full"/>
+                            </ComboBox>
+                            <TextBlock x:ConnectionId='10' x:Name="AutonomyStateTextBlock"
+                                       Text="Autonomie deaktiviert"
+                                       VerticalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+
+                        <TextBox x:ConnectionId='3' x:Name="AutonomyGoalTextBox"
+                                 PlaceholderText="Beschreibe ein Ziel für Jarvis (z.B. 'Bearbeite meine Mails')"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="False"
+                                                                      />
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:ConnectionId='6' Content="Ziel hinzufügen"
+                                    x:Name="AutonomyAddGoalButton"
+                                                                       />
+                            <Button x:ConnectionId='7' Content="Pause"
+                                    x:Name="AutonomyPauseButton"
+                                                                     />
+                            <Button x:ConnectionId='8' Content="Stopp"
+                                    x:Name="AutonomyStopButton"
+                                                                    />
+                        </StackPanel>
+
+                        <TextBlock Text="Aktive Ziele" Style="{StaticResource BodyTextBlockStyle}"/>
+                        <ListView x:ConnectionId='4' x:Name="AutonomyGoalsList"
+                                  Height="100"
+                                  SelectionMode="None"
+                                  IsHitTestVisible="False"/>
+
+                        <TextBlock Text="Aktionsprotokoll" Style="{StaticResource BodyTextBlockStyle}"/>
+                        <ListView x:ConnectionId='5' x:Name="AutonomyLogList"
+                                  Height="140"
+                                  SelectionMode="None"
+                                  IsHitTestVisible="False"/>
+                    </StackPanel>
                 </Border>
 
                 <!-- Status Bar -->
