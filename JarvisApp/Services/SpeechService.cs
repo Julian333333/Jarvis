@@ -1,109 +1,177 @@
 using System;
-using System.Threading.Tasks;
-using Windows.Media.SpeechRecognition;
-using Windows.Media.SpeechSynthesis;
-using Windows.Storage.Streams;
+using System.Globalization;
+using System.Linq;
+using System.Speech.Recognition;
+using System.Speech.Synthesis;
 
 namespace JarvisApp.Services
 {
-    public class SpeechService
+    /// <summary>
+    /// Verwaltet Sprachaufnahme (Hotword + STT) und Sprachausgabe (TTS)
+    /// </summary>
+    public class SpeechService : IDisposable
     {
-        private SpeechRecognizer? _speechRecognizer;
-        private SpeechSynthesizer? _speechSynthesizer;
+        private readonly SpeechRecognitionEngine? _recognizer;
+        private readonly SpeechSynthesizer _synthesizer;
+        private readonly string[] _hotwords = new[] { "jarvis", "hey jarvis" };
+        private bool _awaitingCommand;
+        private bool _isListening;
+
+        public bool IsAvailable => _recognizer != null;
+        public bool IsListening => _isListening;
+
+        public event EventHandler? HotwordDetected;
+        public event EventHandler<string>? CommandRecognized;
+        public event EventHandler<bool>? ListeningStateChanged;
+        public event EventHandler<string>? ErrorOccurred;
 
         public SpeechService()
         {
-            InitializeAsync();
-        }
-
-        private async void InitializeAsync()
-        {
             try
             {
-                _speechRecognizer = new SpeechRecognizer();
-                await _speechRecognizer.CompileConstraintsAsync();
-                _speechSynthesizer = new SpeechSynthesizer();
-            }
-            catch
-            {
-                // Initialization will be retried when needed
-            }
-        }
-
-        /// <summary>
-        /// Startet Spracheingabe und gibt den erkannten Text zurück
-        /// </summary>
-        public async Task<string> ListenAsync()
-        {
-            try
-            {
-                if (_speechRecognizer == null)
+                _recognizer = CreateRecognizer();
+                if (_recognizer != null)
                 {
-                    _speechRecognizer = new SpeechRecognizer();
-                    
-                    // Kontinuierliche Erkennung mit automatischem Stop bei Stille
-                    _speechRecognizer.Timeouts.InitialSilenceTimeout = TimeSpan.FromSeconds(10);
-                    _speechRecognizer.Timeouts.EndSilenceTimeout = TimeSpan.FromSeconds(1.5);
-                    
-                    await _speechRecognizer.CompileConstraintsAsync();
+                    _recognizer.LoadGrammar(new DictationGrammar());
+                    _recognizer.SpeechRecognized += OnSpeechRecognized;
+                    _recognizer.AudioStateChanged += OnAudioStateChanged;
+                    _recognizer.RecognizeCompleted += OnRecognizeCompleted;
                 }
-
-                // Einmaliges Erkennen - wartet auf Sprache und stoppt automatisch bei Stille
-                var result = await _speechRecognizer.RecognizeAsync();
-                
-                if (result.Status == SpeechRecognitionResultStatus.Success)
-                {
-                    return result.Text;
-                }
-                else
-                {
-                    return $"❌ Spracherkennung fehlgeschlagen: {result.Status}";
-                }
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return "❌ Mikrofonzugriff verweigert.\n\n" +
-                       "💡 Lösung:\n" +
-                       "1. Öffne Windows Einstellungen\n" +
-                       "2. Gehe zu Datenschutz & Sicherheit → Mikrofon\n" +
-                       "3. Aktiviere 'Mikrofon-Zugriff'\n" +
-                       "4. Aktiviere 'Desktop-Apps Zugriff auf Mikrofon erlauben'";
             }
             catch (Exception ex)
             {
-                return $"❌ Fehler bei Spracherkennung: {ex.Message}\n\n" +
-                       "💡 Mögliche Lösungen:\n" +
-                       "• Stelle sicher, dass ein Mikrofon angeschlossen ist\n" +
-                       "• Überprüfe die Mikrofon-Berechtigungen in Windows\n" +
-                       "• Aktiviere Windows-Spracherkennung in den Einstellungen";
+                _recognizer = null;
+                ErrorOccurred?.Invoke(this, $"Spracherkennung nicht verfügbar: {ex.Message}");
             }
-        }
 
-        /// <summary>
-        /// Spricht den gegebenen Text aus
-        /// </summary>
-        public async Task<IRandomAccessStream?> SpeakAsync(string text)
-        {
+            _synthesizer = new SpeechSynthesizer();
             try
             {
-                if (_speechSynthesizer == null)
-                {
-                    _speechSynthesizer = new SpeechSynthesizer();
-                }
-
-                var stream = await _speechSynthesizer.SynthesizeTextToStreamAsync(text);
-                return stream;
+                _synthesizer.SelectVoiceByHints(VoiceGender.Male, VoiceAge.Adult, 0, new CultureInfo("de-DE"));
             }
             catch
             {
-                return null;
+                // Fallback auf Standardsprache
+            }
+        }
+
+        private SpeechRecognitionEngine? CreateRecognizer()
+        {
+            try
+            {
+                return new SpeechRecognitionEngine(new CultureInfo("de-DE"));
+            }
+            catch
+            {
+                try
+                {
+                    return new SpeechRecognitionEngine(new CultureInfo("en-US"));
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+        }
+
+        public bool StartListening()
+        {
+            var recognizer = _recognizer;
+            if (recognizer == null) return false;
+            if (_isListening) return true;
+
+            try
+            {
+                recognizer.SetInputToDefaultAudioDevice();
+                recognizer.RecognizeAsync(RecognizeMode.Multiple);
+                _isListening = true;
+                ListeningStateChanged?.Invoke(this, true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ErrorOccurred?.Invoke(this, ex.Message);
+                return false;
+            }
+        }
+
+        public void StopListening()
+        {
+            var recognizer = _recognizer;
+            if (recognizer == null) return;
+            if (!_isListening) return;
+
+            try
+            {
+                recognizer.RecognizeAsyncStop();
+                _isListening = false;
+                ListeningStateChanged?.Invoke(this, false);
+            }
+            catch (Exception ex)
+            {
+                ErrorOccurred?.Invoke(this, ex.Message);
+            }
+        }
+
+        public void SpeakAsync(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return;
+            _synthesizer.SpeakAsyncCancelAll();
+            _synthesizer.SpeakAsync(text);
+        }
+
+        private void OnSpeechRecognized(object? sender, SpeechRecognizedEventArgs e)
+        {
+            var result = e.Result;
+            var recognizedText = result?.Text?.Trim();
+            if (result == null || string.IsNullOrWhiteSpace(recognizedText)) return;
+
+            var lower = recognizedText.ToLowerInvariant();
+            System.Diagnostics.Debug.WriteLine($"[Speech] Recognized: {recognizedText} (Confidence: {result.Confidence:P0})");
+
+            if (_hotwords.Any(hw => lower.Contains(hw)))
+            {
+                _awaitingCommand = true;
+                HotwordDetected?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+
+            if (_awaitingCommand)
+            {
+                _awaitingCommand = false;
+                CommandRecognized?.Invoke(this, recognizedText);
+            }
+        }
+
+        private void OnAudioStateChanged(object? sender, AudioStateChangedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Speech] AudioState: {e.AudioState}");
+        }
+
+        private void OnRecognizeCompleted(object? sender, RecognizeCompletedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("[Speech] Recognize completed");
+            _isListening = false;
+            ListeningStateChanged?.Invoke(this, false);
+
+            if (e.Error != null)
+            {
+                ErrorOccurred?.Invoke(this, e.Error.Message);
             }
         }
 
         public void Dispose()
         {
-            _speechRecognizer?.Dispose();
-            _speechSynthesizer?.Dispose();
+            StopListening();
+            if (_recognizer != null)
+            {
+                _recognizer.SpeechRecognized -= OnSpeechRecognized;
+                _recognizer.AudioStateChanged -= OnAudioStateChanged;
+                _recognizer.RecognizeCompleted -= OnRecognizeCompleted;
+                _recognizer.Dispose();
+            }
+
+            _synthesizer.Dispose();
         }
     }
 }

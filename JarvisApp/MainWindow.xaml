@@ -21,8 +21,7 @@
 
         <!-- Main Content -->
         <Grid Grid.Row="1" Padding="24">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Spacing="20" MaxWidth="800" HorizontalAlignment="Center" Margin="0,40,0,40">
+            <StackPanel Spacing="20" MaxWidth="800" HorizontalAlignment="Center" VerticalAlignment="Center">
                 
                 <!-- Welcome Card -->
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -66,11 +65,6 @@
                                    Click="SendButton_Click"
                                    Width="100"/>
                             
-                            <Button x:Name="VoiceButton"
-                                   Content="🎤 Sprache"
-                                   Click="VoiceButton_Click"
-                                   Width="100"/>
-                            
                             <Button x:Name="ClearButton"
                                    Content="Löschen"
                                    Click="ClearButton_Click"
@@ -85,10 +79,9 @@
                        BorderThickness="1"
                        CornerRadius="8"
                        Padding="24"
-                       Height="400">
+                       MinHeight="250">
                     <ScrollViewer x:Name="ResponseScrollViewer"
-                                 VerticalScrollBarVisibility="Auto"
-                                 HorizontalScrollBarVisibility="Disabled">
+                                 VerticalScrollBarVisibility="Auto">
                         <TextBlock x:Name="ResponseTextBlock"
                                   Text="Bereit für deine Fragen..."
                                   Style="{StaticResource BodyTextBlockStyle}"
@@ -96,6 +89,81 @@
                                   TextWrapping="Wrap"
                                   IsTextSelectionEnabled="True"/>
                     </ScrollViewer>
+                </Border>
+
+                <!-- Voice Control -->
+                <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
+                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                       BorderThickness="1"
+                       CornerRadius="8"
+                       Padding="16">
+                    <StackPanel Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+                        <ToggleSwitch x:Name="VoiceToggle"
+                                      Header="Sprachsteuerung"
+                                      OffContent="Deaktiviert"
+                                      OnContent="Aktiv"
+                                      Toggled="VoiceToggle_Toggled"/>
+                        <StackPanel>
+                            <TextBlock Text="Hotword: 'Jarvis'" Style="{StaticResource BodyTextBlockStyle}"/>
+                            <TextBlock x:Name="VoiceStatusTextBlock"
+                                       Text="🎙️ Sprache deaktiviert"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Autonomy Control -->
+                <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
+                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                       BorderThickness="1"
+                       CornerRadius="8"
+                       Padding="16">
+                    <StackPanel Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <TextBlock Text="Autonomer Modus" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                            <ComboBox x:Name="AutonomyModeCombo"
+                                      Width="150"
+                                      SelectionChanged="AutonomyModeCombo_SelectionChanged">
+                                <ComboBoxItem Content="Aus" Tag="Off" IsSelected="True"/>
+                                <ComboBoxItem Content="Pausiert" Tag="Paused"/>
+                                <ComboBoxItem Content="Vollständig" Tag="Full"/>
+                            </ComboBox>
+                            <TextBlock x:Name="AutonomyStateTextBlock"
+                                       Text="Autonomie deaktiviert"
+                                       VerticalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+
+                        <TextBox x:Name="AutonomyGoalTextBox"
+                                 PlaceholderText="Beschreibe ein Ziel für Jarvis (z.B. 'Bearbeite meine Mails')"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="False"
+                                 KeyDown="AutonomyGoalTextBox_KeyDown"/>
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Ziel hinzufügen"
+                                    x:Name="AutonomyAddGoalButton"
+                                    Click="AutonomyAddGoalButton_Click"/>
+                            <Button Content="Pause"
+                                    x:Name="AutonomyPauseButton"
+                                    Click="AutonomyPauseButton_Click"/>
+                            <Button Content="Stopp"
+                                    x:Name="AutonomyStopButton"
+                                    Click="AutonomyStopButton_Click"/>
+                        </StackPanel>
+
+                        <TextBlock Text="Aktive Ziele" Style="{StaticResource BodyTextBlockStyle}"/>
+                        <ListView x:Name="AutonomyGoalsList"
+                                  Height="100"
+                                  SelectionMode="None"
+                                  IsHitTestVisible="False"/>
+
+                        <TextBlock Text="Aktionsprotokoll" Style="{StaticResource BodyTextBlockStyle}"/>
+                        <ListView x:Name="AutonomyLogList"
+                                  Height="140"
+                                  SelectionMode="None"
+                                  IsHitTestVisible="False"/>
+                    </StackPanel>
                 </Border>
 
                 <!-- Status Bar -->
@@ -120,7 +188,6 @@
                               VerticalAlignment="Center"/>
                 </Grid>
             </StackPanel>
-            </ScrollViewer>
         </Grid>
     </Grid>
 </Window>
