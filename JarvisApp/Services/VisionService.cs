@@ -117,13 +117,14 @@ Koordinaten sind in Prozent (0-100) von links-oben.";
                     // 3. JSON parsen
                     try
                     {
-                        var action = JsonSerializer.Deserialize<AutonomousAction>(response);
+                        var json = ExtractJsonObject(response);
+                        var action = JsonSerializer.Deserialize<AutonomousAction>(json ?? response);
                         if (action == null)
                         {
                             return $"❌ Schritt {step}: Konnte Aktion nicht parsen";
                         }
 
-                        System.Diagnostics.Debug.WriteLine($"🎯 Aktion: {action.Action}, Ziel: {action.Target}");
+                        System.Diagnostics.Debug.WriteLine($"🎯 Aktion: {action.Action}, Ziel: {action.TargetText}");
 
                         // 4. Prüfen ob fertig
                         if (action.GoalAchieved || action.Action?.ToLower() == "done")
@@ -173,7 +174,7 @@ Koordinaten sind in Prozent (0-100) von links-oben.";
                             _automation.MoveMouse(x, y);
                             await Task.Delay(300);
                             _automation.LeftClick();
-                            return $"🖱️ Klick bei ({action.X}%, {action.Y}%) - {action.Target}";
+                            return $"🖱️ Klick bei ({action.X}%, {action.Y}%) - {action.TargetText}";
                         }
                         return "❌ Ungültige Koordinaten für Klick";
 
@@ -235,7 +236,8 @@ Koordinaten sind in Prozent (0-100) von links-oben.";
                 // Parse JSON
                 try
                 {
-                    var result = JsonSerializer.Deserialize<VisionAnalysisResult>(response);
+                    var json = ExtractJsonObject(response);
+                    var result = JsonSerializer.Deserialize<VisionAnalysisResult>(json ?? response);
                     if (result != null)
                     {
                         result.Success = true;
@@ -324,6 +326,34 @@ Koordinaten sind in Prozent (0-100) von links-oben.";
             return Convert.ToBase64String(imageBytes);
         }
 
+        private string? ExtractJsonObject(string response)
+        {
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                return null;
+            }
+
+            var cleaned = response.Trim();
+            if (cleaned.StartsWith("```"))
+            {
+                var firstNewline = cleaned.IndexOf('\n');
+                if (firstNewline >= 0)
+                {
+                    cleaned = cleaned.Substring(firstNewline + 1);
+                }
+                cleaned = cleaned.Replace("```", "").Trim();
+            }
+
+            var start = cleaned.IndexOf('{');
+            var end = cleaned.LastIndexOf('}');
+            if (start >= 0 && end > start)
+            {
+                return cleaned.Substring(start, end - start + 1);
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// Prüft ob LLaVA Model verfügbar ist
         /// </summary>
@@ -370,7 +400,7 @@ Koordinaten sind in Prozent (0-100) von links-oben.";
         public string? Action { get; set; }
         
         [JsonPropertyName("target")]
-        public string? Target { get; set; }
+        public JsonElement? Target { get; set; }
         
         [JsonPropertyName("text")]
         public string? Text { get; set; }
@@ -386,6 +416,32 @@ Koordinaten sind in Prozent (0-100) von links-oben.";
         
         [JsonPropertyName("goalAchieved")]
         public bool GoalAchieved { get; set; }
+
+        [JsonIgnore]
+        public string TargetText => NormalizeJsonElement(Target);
+
+        private static string NormalizeJsonElement(JsonElement? element)
+        {
+            if (element == null)
+            {
+                return string.Empty;
+            }
+
+            switch (element.Value.ValueKind)
+            {
+                case JsonValueKind.String:
+                    return element.Value.GetString() ?? string.Empty;
+                case JsonValueKind.Number:
+                case JsonValueKind.True:
+                case JsonValueKind.False:
+                    return element.Value.ToString();
+                case JsonValueKind.Object:
+                case JsonValueKind.Array:
+                    return element.Value.ToString();
+                default:
+                    return string.Empty;
+            }
+        }
     }
 
     public class OllamaResponse

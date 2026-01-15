@@ -10,183 +10,324 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Title Bar -->
         <Grid Grid.Row="0" Background="{ThemeResource SystemAccentColor}" Padding="16,12">
-            <TextBlock Text="JARVIS AI Assistant" 
-                      Style="{StaticResource TitleTextBlockStyle}"
-                      Foreground="White"/>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE8F1;" FontSize="24" Foreground="White"/>
+                <TextBlock Text="JARVIS AI Assistant" 
+                          Style="{StaticResource TitleTextBlockStyle}"
+                          Foreground="White"
+                          VerticalAlignment="Center"/>
+            </StackPanel>
+            
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Button x:Name="MinimizeButton" 
+                        Content="&#xE921;" 
+                        FontFamily="Segoe MDL2 Assets"
+                        Background="Transparent"
+                        Foreground="White"
+                        Click="MinimizeButton_Click"
+                        Width="40" Height="32"/>
+                <Button x:Name="SettingsButton" 
+                        Content="&#xE713;" 
+                        FontFamily="Segoe MDL2 Assets"
+                        Background="Transparent"
+                        Foreground="White"
+                        Click="SettingsButton_Click"
+                        Width="40" Height="32"/>
+            </StackPanel>
         </Grid>
 
-        <!-- Main Content -->
-        <Grid Grid.Row="1" Padding="24">
-            <StackPanel Spacing="20" MaxWidth="800" HorizontalAlignment="Center" VerticalAlignment="Center">
-                
+        <!-- Main Content - Responsive Layout -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="320"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="350" x:Name="SidebarColumn"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Main Chat Area -->
+            <Grid Grid.Column="0" Padding="20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
                 <!-- Welcome Card -->
-                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                <Border Grid.Row="0"
+                       Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                        BorderThickness="1"
                        CornerRadius="8"
-                       Padding="24">
-                    <StackPanel Spacing="12">
+                       Padding="20"
+                       Margin="0,0,0,16">
+                    <StackPanel Spacing="8">
                         <TextBlock Text="Welcome to JARVIS" 
                                   Style="{StaticResource SubtitleTextBlockStyle}"/>
-                        <TextBlock Text="Your intelligent AI assistant powered by Windows 11" 
+                        <TextBlock Text="Your intelligent AI assistant for Windows 11" 
                                   Style="{StaticResource BodyTextBlockStyle}"
                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                   TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Input Section -->
-                <StackPanel Spacing="12">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <TextBox x:Name="InputTextBox"
-                                Grid.Column="0"
-                                PlaceholderText="Stelle JARVIS eine Frage..."
-                                Height="100"
-                                TextWrapping="Wrap"
-                                AcceptsReturn="True"
-                                KeyDown="InputTextBox_KeyDown"/>
-                        
-                        <StackPanel Grid.Column="1" 
-                                   Orientation="Vertical" 
-                                   Spacing="8" 
-                                   Margin="12,0,0,0">
-                            <Button x:Name="SendButton"
-                                   Content="Senden" 
-                                   Style="{StaticResource AccentButtonStyle}"
-                                   Click="SendButton_Click"
-                                   Width="100"/>
-                            
-                            <Button x:Name="ClearButton"
-                                   Content="Löschen"
-                                   Click="ClearButton_Click"
-                                   Width="100"/>
-                        </StackPanel>
-                    </Grid>
-                </StackPanel>
+                <!-- Chat History / Response Area -->
+                <Grid Grid.Row="1" Margin="0,0,0,16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" 
+                              Text="Conversation" 
+                              Style="{StaticResource BodyStrongTextBlockStyle}"
+                              Margin="0,0,0,8"/>
+                    
+                    <Border Grid.Row="1"
+                           Background="{ThemeResource LayerFillColorDefaultBrush}"
+                           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                           BorderThickness="1"
+                           CornerRadius="8"
+                           Padding="16">
+                        <ScrollViewer x:Name="ChatScrollViewer"
+                                     VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="ChatMessagesPanel" Spacing="12">
+                                <TextBlock x:Name="ResponseTextBlock"
+                                          Text="Bereit für deine Fragen..."
+                                          Style="{StaticResource BodyTextBlockStyle}"
+                                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                          TextWrapping="Wrap"
+                                          IsTextSelectionEnabled="True"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
 
-                <!-- Response Section -->
-                <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
-                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                       BorderThickness="1"
-                       CornerRadius="8"
-                       Padding="24"
-                       MinHeight="250">
-                    <ScrollViewer x:Name="ResponseScrollViewer"
-                                 VerticalScrollBarVisibility="Auto">
-                        <TextBlock x:Name="ResponseTextBlock"
-                                  Text="Bereit für deine Fragen..."
-                                  Style="{StaticResource BodyTextBlockStyle}"
-                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                  TextWrapping="Wrap"
-                                  IsTextSelectionEnabled="True"/>
-                    </ScrollViewer>
-                </Border>
-
-                <!-- Voice Control -->
-                <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
-                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                       BorderThickness="1"
-                       CornerRadius="8"
-                       Padding="16">
-                    <StackPanel Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
-                        <ToggleSwitch x:Name="VoiceToggle"
-                                      Header="Sprachsteuerung"
-                                      OffContent="Deaktiviert"
-                                      OnContent="Aktiv"
-                                      Toggled="VoiceToggle_Toggled"/>
-                        <StackPanel>
-                            <TextBlock Text="Hotword: 'Jarvis'" Style="{StaticResource BodyTextBlockStyle}"/>
-                            <TextBlock x:Name="VoiceStatusTextBlock"
-                                       Text="🎙️ Sprache deaktiviert"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Autonomy Control -->
-                <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
-                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                       BorderThickness="1"
-                       CornerRadius="8"
-                       Padding="16">
-                    <StackPanel Spacing="12">
-                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                            <TextBlock Text="Autonomer Modus" Style="{StaticResource SubtitleTextBlockStyle}"/>
-                            <ComboBox x:Name="AutonomyModeCombo"
-                                      Width="150"
-                                      SelectionChanged="AutonomyModeCombo_SelectionChanged">
-                                <ComboBoxItem Content="Aus" Tag="Off" IsSelected="True"/>
-                                <ComboBoxItem Content="Pausiert" Tag="Paused"/>
-                                <ComboBoxItem Content="Vollständig" Tag="Full"/>
-                            </ComboBox>
-                            <TextBlock x:Name="AutonomyStateTextBlock"
-                                       Text="Autonomie deaktiviert"
-                                       VerticalAlignment="Center"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                        </StackPanel>
-
-                        <TextBox x:Name="AutonomyGoalTextBox"
-                                 PlaceholderText="Beschreibe ein Ziel für Jarvis (z.B. 'Bearbeite meine Mails')"
-                                 TextWrapping="Wrap"
-                                 AcceptsReturn="False"
-                                 KeyDown="AutonomyGoalTextBox_KeyDown"/>
-
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button Content="Ziel hinzufügen"
-                                    x:Name="AutonomyAddGoalButton"
-                                    Click="AutonomyAddGoalButton_Click"/>
-                            <Button Content="Pause"
-                                    x:Name="AutonomyPauseButton"
-                                    Click="AutonomyPauseButton_Click"/>
-                            <Button Content="Stopp"
-                                    x:Name="AutonomyStopButton"
-                                    Click="AutonomyStopButton_Click"/>
-                        </StackPanel>
-
-                        <TextBlock Text="Aktive Ziele" Style="{StaticResource BodyTextBlockStyle}"/>
-                        <ListView x:Name="AutonomyGoalsList"
-                                  Height="100"
-                                  SelectionMode="None"
-                                  IsHitTestVisible="False"/>
-
-                        <TextBlock Text="Aktionsprotokoll" Style="{StaticResource BodyTextBlockStyle}"/>
-                        <ListView x:Name="AutonomyLogList"
-                                  Height="140"
-                                  SelectionMode="None"
-                                  IsHitTestVisible="False"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- Status Bar -->
-                <Grid>
+                <!-- Input Area -->
+                <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    
-                    <StackPanel Orientation="Horizontal" Spacing="8" Grid.Column="0">
-                        <FontIcon Glyph="&#xE72C;" FontSize="16"/>
-                        <TextBlock x:Name="StatusTextBlock" 
-                                  Text="Ready" 
-                                  VerticalAlignment="Center"
-                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+
+                    <TextBox x:Name="InputTextBox"
+                             Grid.Column="0"
+                             PlaceholderText="Type your message or command..."
+                             Height="80"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalContentAlignment="Top"
+                             Padding="12"
+                             KeyDown="InputTextBox_KeyDown"/>
+
+                    <StackPanel Grid.Column="1" 
+                               Orientation="Vertical" 
+                               Spacing="8" 
+                               Margin="12,0,0,0">
+                        <Button x:Name="SendButton"
+                               Content="&#xE724;" 
+                               FontFamily="Segoe MDL2 Assets"
+                               ToolTipService.ToolTip="Send (Ctrl+Enter)"
+                               Style="{StaticResource AccentButtonStyle}"
+                               Click="SendButton_Click"
+                               Width="80"
+                               Height="36"/>
+                        
+                        <Button x:Name="ClearButton"
+                               Content="&#xE74D;"
+                               FontFamily="Segoe MDL2 Assets"
+                               ToolTipService.ToolTip="Clear chat"
+                               Click="ClearButton_Click"
+                               Width="80"
+                               Height="36"/>
                     </StackPanel>
-                    
-                    <TextBlock Text="WinUI 3 • .NET 8" 
-                              Grid.Column="2"
-                              Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                              VerticalAlignment="Center"/>
                 </Grid>
+            </Grid>
+
+            <!-- Splitter -->
+            <Border Grid.Column="1" 
+                    Width="1" 
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                    Margin="0,20"/>
+
+            <!-- Sidebar - Controls & Status -->
+            <ScrollViewer Grid.Column="2" 
+                         VerticalScrollBarVisibility="Auto"
+                         Padding="20">
+                <StackPanel Spacing="16">
+
+                    <!-- Voice Control Card -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                           BorderThickness="1"
+                           CornerRadius="8"
+                           Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="🎙️ Voice Control" 
+                                      Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            
+                            <ToggleSwitch x:Name="VoiceToggle"
+                                         Header="Speech Recognition"
+                                         OffContent="Off"
+                                         OnContent="Active"
+                                         Toggled="VoiceToggle_Toggled"/>
+                            
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Hotword: 'Jarvis'" 
+                                          Style="{StaticResource CaptionTextBlockStyle}"
+                                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock x:Name="VoiceStatusTextBlock"
+                                          Text="🎙️ Voice disabled"
+                                          Style="{StaticResource CaptionTextBlockStyle}"
+                                          Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Autonomy Control Card -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                           BorderThickness="1"
+                           CornerRadius="8"
+                           Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="🤖 Autonomous Mode" 
+                                      Style="{StaticResource BodyStrongTextBlockStyle}"/>
+
+                            <ComboBox x:Name="AutonomyModeCombo"
+                                      Header="Mode"
+                                      HorizontalAlignment="Stretch"
+                                      SelectionChanged="AutonomyModeCombo_SelectionChanged">
+                                <ComboBoxItem Content="Disabled" Tag="Off" IsSelected="True"/>
+                                <ComboBoxItem Content="Paused" Tag="Paused"/>
+                                <ComboBoxItem Content="Full Autonomy" Tag="Full"/>
+                            </ComboBox>
+
+                            <TextBlock x:Name="AutonomyStateTextBlock"
+                                       Text="Autonomy disabled"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+
+                            <TextBox x:Name="AutonomyGoalTextBox"
+                                     PlaceholderText="Describe a goal for Jarvis..."
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="False"
+                                     Height="60"
+                                     KeyDown="AutonomyGoalTextBox_KeyDown"/>
+
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Add"
+                                        x:Name="AutonomyAddGoalButton"
+                                        Click="AutonomyAddGoalButton_Click"
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        HorizontalAlignment="Stretch"/>
+                                <Button Content="Pause"
+                                        x:Name="AutonomyPauseButton"
+                                        Click="AutonomyPauseButton_Click"
+                                        HorizontalAlignment="Stretch"/>
+                                <Button Content="Stop"
+                                        x:Name="AutonomyStopButton"
+                                        Click="AutonomyStopButton_Click"
+                                        HorizontalAlignment="Stretch"/>
+                            </StackPanel>
+
+                            <Expander Header="Active Goals" IsExpanded="False">
+                                <ListView x:Name="AutonomyGoalsList"
+                                          MaxHeight="120"
+                                          SelectionMode="None"
+                                          IsHitTestVisible="False"/>
+                            </Expander>
+
+                            <Expander Header="Action Log" IsExpanded="False">
+                                <ListView x:Name="AutonomyLogList"
+                                          MaxHeight="150"
+                                          SelectionMode="None"
+                                          IsHitTestVisible="False"/>
+                            </Expander>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Quick Actions Card -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                           BorderThickness="1"
+                           CornerRadius="8"
+                           Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="⚡ Quick Actions" 
+                                      Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            
+                            <Button x:Name="WorkModeButton"
+                                   Content="🎵 Work Mode"
+                                   HorizontalAlignment="Stretch"
+                                   Click="WorkModeButton_Click"/>
+                            
+                            <Button x:Name="VisionButton"
+                                   Content="👁️ Screen Capture"
+                                   HorizontalAlignment="Stretch"
+                                   Click="VisionButton_Click"/>
+                            
+                            <Button x:Name="WebSearchButton"
+                                   Content="🌐 Web Search"
+                                   HorizontalAlignment="Stretch"
+                                   Click="WebSearchButton_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Grid Grid.Row="2" 
+              Background="{ThemeResource LayerFillColorAltBrush}"
+              Padding="16,8"
+              BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+              BorderThickness="0,1,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Grid.Column="0" VerticalAlignment="Center">
+                <ProgressRing x:Name="StatusProgressRing" 
+                             Width="16" 
+                             Height="16" 
+                             IsActive="False"
+                             Visibility="Collapsed"/>
+                <FontIcon x:Name="StatusIcon" 
+                         Glyph="&#xE73E;" 
+                         FontSize="16"
+                         Foreground="{ThemeResource SystemFillColorSuccessBrush}"/>
+                <TextBlock x:Name="StatusTextBlock" 
+                          Text="Ready" 
+                          Style="{StaticResource CaptionTextBlockStyle}"
+                          VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" 
+                       Orientation="Horizontal" 
+                       Spacing="12"
+                       VerticalAlignment="Center">
+                <TextBlock x:Name="ModelStatusTextBlock"
+                          Text="AI: Not Connected"
+                          Style="{StaticResource CaptionTextBlockStyle}"
+                          Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                <TextBlock Text="WinUI 3 • .NET 8" 
+                          Style="{StaticResource CaptionTextBlockStyle}"
+                          Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
             </StackPanel>
         </Grid>
     </Grid>

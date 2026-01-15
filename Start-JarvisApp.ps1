@@ -10,7 +10,30 @@ Write-Host ""
 $projectPath = Join-Path $PSScriptRoot "JarvisApp"
 Set-Location $projectPath
 
-Write-Host "[1/3] Kompiliere Projekt..." -ForegroundColor Yellow
+Write-Host "[1/4] Pruefe Ollama..." -ForegroundColor Yellow
+$ollamaCmd = Get-Command ollama -ErrorAction SilentlyContinue
+
+if (-not $ollamaCmd) {
+    Write-Host "❌ Ollama wurde nicht gefunden." -ForegroundColor Red
+    Write-Host "Bitte installiere Ollama und stelle sicher, dass es im PATH ist." -ForegroundColor Gray
+    Write-Host "Danach: ollama serve" -ForegroundColor Gray
+    Write-Host ""
+} else {
+    $ollamaProcess = Get-Process -Name "ollama" -ErrorAction SilentlyContinue
+    if (-not $ollamaProcess) {
+        Write-Host "Starte Ollama Server..." -ForegroundColor Yellow
+        Start-Process "ollama" -ArgumentList "serve" -WindowStyle Minimized
+    } else {
+        Write-Host "Ollama Server laeuft bereits." -ForegroundColor Green
+    }
+    Write-Host ""
+}
+
+Write-Host "[1.5/4] Beende laufende JarvisApp..." -ForegroundColor Yellow
+Get-Process -Name "JarvisApp" -ErrorAction SilentlyContinue | Stop-Process -Force
+Write-Host "" 
+
+Write-Host "[2/4] Kompiliere Projekt..." -ForegroundColor Yellow
 dotnet clean --nologo
 dotnet build -c Release /p:Platform=x64 --nologo
 
@@ -23,7 +46,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "✅ Build erfolgreich!" -ForegroundColor Green
 Write-Host ""
 
-Write-Host "[2/3] Suche ausführbare Datei..." -ForegroundColor Yellow
+Write-Host "[3/4] Suche ausführbare Datei..." -ForegroundColor Yellow
 $exePath = Join-Path $projectPath "bin\x64\Release\net8.0-windows10.0.19041.0\JarvisApp.exe"
 
 if (-not (Test-Path $exePath)) {
@@ -36,7 +59,7 @@ if (-not (Test-Path $exePath)) {
 Write-Host "✅ Gefunden: JarvisApp.exe" -ForegroundColor Green
 Write-Host ""
 
-Write-Host "[3/3] Starte JARVIS App..." -ForegroundColor Yellow
+Write-Host "[4/4] Starte JARVIS App..." -ForegroundColor Yellow
 Write-Host ""
 Write-Host "🚀 Die App wird geöffnet..." -ForegroundColor Cyan
 Write-Host ""

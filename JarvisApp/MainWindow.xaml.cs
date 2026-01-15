@@ -36,7 +36,7 @@ namespace JarvisApp
             
             // Set window size
             var appWindow = this.AppWindow;
-            appWindow.Resize(new Windows.Graphics.SizeInt32(1000, 700));
+            appWindow.Resize(new Windows.Graphics.SizeInt32(1400, 800));
 
             // Initialize Services
             _aiService = new AIService();
@@ -66,12 +66,15 @@ namespace JarvisApp
             if (isRunning)
             {
                 StatusTextBlock.Text = "✅ Ollama verbunden";
+                ModelStatusTextBlock.Text = "AI: Connected";
+                StatusIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Green);
                 
                 // Get available models
                 var models = await _aiService.GetAvailableModelsAsync();
                 if (models.Length > 0)
                 {
                     StatusTextBlock.Text += $" | Modelle: {string.Join(", ", models)}";
+                    ModelStatusTextBlock.Text = $"AI: {models[0]}";
                 }
 
                 // Check for Vision Model (LLaVA)
@@ -88,6 +91,8 @@ namespace JarvisApp
             else
             {
                 StatusTextBlock.Text = "⚠️ Ollama nicht gefunden - Starte mit: ollama serve";
+                ModelStatusTextBlock.Text = "AI: Not Connected";
+                StatusIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Orange);
                 ResponseTextBlock.Text = "💡 Um die AI-Funktionen zu nutzen:\n\n" +
                     "1. Installiere Ollama von https://ollama.ai\n" +
                     "2. Öffne ein Terminal und starte: ollama serve\n" +
@@ -151,6 +156,9 @@ namespace JarvisApp
                 InputTextBox.IsEnabled = false;
                 SendButton.IsEnabled = false;
                 StatusTextBlock.Text = "🤖 AI analysiert Anfrage...";
+                StatusProgressRing.IsActive = true;
+                StatusProgressRing.Visibility = Visibility.Visible;
+                StatusIcon.Visibility = Visibility.Collapsed;
                 ResponseTextBlock.Text = string.Empty;
             }
             else
@@ -177,6 +185,7 @@ namespace JarvisApp
                 var intelligentResult = await _intelligentCommandService.ProcessCommandAsync(input);
                 ResponseTextBlock.Text = intelligentResult;
                 StatusTextBlock.Text = "✅ Fertig";
+                StatusIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Green);
                 if (!fromVoice)
                 {
                     InputTextBox.Text = string.Empty;
@@ -186,6 +195,7 @@ namespace JarvisApp
             catch (Exception ex)
             {
                 StatusTextBlock.Text = "❌ Fehler";
+                StatusIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
                 ResponseTextBlock.Text = $"Fehler: {ex.Message}";
                 SpeakIfNeeded("Es gab einen Fehler.");
             }
@@ -195,6 +205,9 @@ namespace JarvisApp
                 {
                     InputTextBox.IsEnabled = true;
                     SendButton.IsEnabled = true;
+                    StatusProgressRing.IsActive = false;
+                    StatusProgressRing.Visibility = Visibility.Collapsed;
+                    StatusIcon.Visibility = Visibility.Visible;
                     InputTextBox.Focus(FocusState.Programmatic);
                 }
             }
@@ -577,6 +590,103 @@ namespace JarvisApp
                 _speechService.StopListening();
                 VoiceStatusTextBlock.Text = "🎙️ Sprache deaktiviert";
                 StatusTextBlock.Text = "🔇 Sprachsteuerung aus";
+            }
+        }
+
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
+            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+            appWindow.Hide();
+        }
+
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            // TODO: Implement settings dialog
+            StatusTextBlock.Text = "⚙️ Settings coming soon...";
+        }
+
+        private async void WorkModeButton_Click(object sender, RoutedEventArgs e)
+        {
+            StatusTextBlock.Text = "🎵 Starting Work Mode...";
+            StatusProgressRing.IsActive = true;
+            StatusProgressRing.Visibility = Visibility.Visible;
+            
+            try
+            {
+                var result = await _workModeService.ExecuteWorkModeAsync();
+                ResponseTextBlock.Text = result;
+                StatusTextBlock.Text = "✅ Work Mode activated";
+                SpeakIfNeeded(result);
+            }
+            catch (Exception ex)
+            {
+                StatusTextBlock.Text = "❌ Work Mode failed";
+                ResponseTextBlock.Text = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                StatusProgressRing.IsActive = false;
+                StatusProgressRing.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private async void VisionButton_Click(object sender, RoutedEventArgs e)
+        {
+            StatusTextBlock.Text = "👁️ Capturing screen...";
+            StatusProgressRing.IsActive = true;
+            StatusProgressRing.Visibility = Visibility.Visible;
+            
+            try
+            {
+                var result = await _visionService.AnalyzeScreenAsync("What do you see on the screen?");
+                ResponseTextBlock.Text = "👁️ Screen Analysis:\n\n" + result;
+                StatusTextBlock.Text = "✅ Screen captured and analyzed";
+                SpeakIfNeeded("Screen analysis complete");
+            }
+            catch (Exception ex)
+            {
+                StatusTextBlock.Text = "❌ Vision failed";
+                ResponseTextBlock.Text = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                StatusProgressRing.IsActive = false;
+                StatusProgressRing.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private async void WebSearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            var query = InputTextBox.Text.Trim();
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                StatusTextBlock.Text = "⚠️ Please enter a search query";
+                return;
+            }
+
+            StatusTextBlock.Text = "🌐 Searching web...";
+            StatusProgressRing.IsActive = true;
+            StatusProgressRing.Visibility = Visibility.Visible;
+            
+            try
+            {
+                var result = await _browserAutomationService.SearchWebAsync(query);
+                ResponseTextBlock.Text = "🌐 Web Search Results:\n\n" + result;
+                StatusTextBlock.Text = "✅ Web search complete";
+                InputTextBox.Text = string.Empty;
+                SpeakIfNeeded("Search complete");
+            }
+            catch (Exception ex)
+            {
+                StatusTextBlock.Text = "❌ Search failed";
+                ResponseTextBlock.Text = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                StatusProgressRing.IsActive = false;
+                StatusProgressRing.Visibility = Visibility.Collapsed;
             }
         }
     }

@@ -284,6 +284,31 @@ namespace JarvisApp.Services
 
         public bool IsWaitingForConfirmation => _waitingForConfirmation;
         public string PendingAction => _pendingAction;
+
+        /// <summary>
+        /// Performs a web search and returns results
+        /// </summary>
+        public async Task<string> SearchWebAsync(string query)
+        {
+            try
+            {
+                // Open default browser with search query
+                var searchUrl = $"https://www.google.com/search?q={Uri.EscapeDataString(query)}";
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = searchUrl,
+                    UseShellExecute = true
+                });
+                
+                await Task.Delay(2000); // Wait for browser to open
+                
+                return $"Opened browser with search: {query}";
+            }
+            catch (Exception ex)
+            {
+                return $"Error performing web search: {ex.Message}";
+            }
+        }
     }
 
     #region DTOs

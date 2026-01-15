@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -58,6 +60,11 @@ namespace JarvisApp.Services
                     OpenProgram("microsoft-edge:");
                     return new CommandResult { Success = true, Message = "🌐 Browser geöffnet" };
                 }
+                if (lowerInput.Contains("chrome") || lowerInput.Contains("google chrome"))
+                {
+                    OpenProgram("chrome.exe");
+                    return new CommandResult { Success = true, Message = "🌐 Chrome geöffnet" };
+                }
                 if (lowerInput.Contains("notepad") || lowerInput.Contains("editor"))
                 {
                     OpenProgram("notepad.exe");
@@ -93,6 +100,33 @@ namespace JarvisApp.Services
                     OpenProgram("powershell.exe");
                     return new CommandResult { Success = true, Message = "💻 PowerShell geöffnet" };
                 }
+
+                var openTarget = ExtractTextAfterKeyword(input, new[] { "öffne", "offne", "starte", "öffnen" });
+                if (!string.IsNullOrWhiteSpace(openTarget))
+                {
+                    if (TryOpenTarget(openTarget, out var openMessage, out var openSuccess))
+                    {
+                        return new CommandResult { Success = openSuccess, Message = openMessage, IsWarning = !openSuccess };
+                    }
+                }
+            }
+
+            // Web-Suche
+            if (lowerInput.Contains("suche") || lowerInput.Contains("search"))
+            {
+                var query = ExtractTextAfterKeyword(input, new[] { "suche nach", "suche", "search for", "search" });
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    var searchUrl = $"https://www.google.com/search?q={Uri.EscapeDataString(query)}";
+                    if (lowerInput.Contains("chrome"))
+                    {
+                        OpenUrlInChrome(searchUrl);
+                        return new CommandResult { Success = true, Message = $"🔍 Suche in Chrome gestartet: {query}" };
+                    }
+
+                    OpenUrl(searchUrl);
+                    return new CommandResult { Success = true, Message = $"🔍 Suche gestartet: {query}" };
+                }
             }
 
             // Websites öffnen
@@ -112,6 +146,15 @@ namespace JarvisApp.Services
                 {
                     OpenUrl("https://www.github.com");
                     return new CommandResult { Success = true, Message = "💻 GitHub geöffnet" };
+                }
+
+                var websiteTarget = ExtractTextAfterKeyword(input, new[] { "gehe zu", "öffne website", "website", "öffne" });
+                if (!string.IsNullOrWhiteSpace(websiteTarget))
+                {
+                    if (TryOpenTarget(websiteTarget, out var websiteMessage, out var websiteSuccess))
+                    {
+                        return new CommandResult { Success = websiteSuccess, Message = websiteMessage, IsWarning = !websiteSuccess };
+                    }
                 }
             }
 
@@ -386,6 +429,88 @@ namespace JarvisApp.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"Fehler beim Öffnen von {url}: {ex.Message}");
+            }
+        }
+
+        private void OpenUrlInChrome(string url)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "chrome.exe",
+                    Arguments = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Fehler beim Öffnen in Chrome: {ex.Message}");
+                OpenUrl(url);
+            }
+        }
+
+        private bool TryOpenTarget(string target, out string message, out bool success)
+        {
+            message = string.Empty;
+            success = false;
+
+            target = target.Trim().Trim('"');
+            if (string.IsNullOrWhiteSpace(target))
+            {
+                return false;
+            }
+
+            if (target.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+            {
+                target = "https://" + target;
+            }
+
+            if (Uri.TryCreate(target, UriKind.Absolute, out var absoluteUri) &&
+                (absoluteUri.Scheme == Uri.UriSchemeHttp || absoluteUri.Scheme == Uri.UriSchemeHttps))
+            {
+                OpenUrl(absoluteUri.ToString());
+                message = $"🌐 Website geöffnet: {absoluteUri.Host}";
+                success = true;
+                return true;
+            }
+
+            if (target.Contains('.') && !target.Contains(' '))
+            {
+                var url = "https://" + target;
+                OpenUrl(url);
+                message = $"🌐 Website geöffnet: {target}";
+                success = true;
+                return true;
+            }
+
+            if (Path.IsPathRooted(target) || target.StartsWith(@"\\"))
+            {
+                if (Directory.Exists(target) || File.Exists(target))
+                {
+                    OpenProgram(target);
+                    message = $"📂 Pfad geöffnet: {target}";
+                    success = true;
+                    return true;
+                }
+
+                message = $"❌ Pfad nicht gefunden: {target}";
+                success = false;
+                return true;
+            }
+
+            try
+            {
+                OpenProgram(target);
+                message = $"🚀 Programm geöffnet: {target}";
+                success = true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                message = $"❌ Konnte nicht öffnen: {target} ({ex.Message})";
+                success = false;
+                return true;
             }
         }
 
